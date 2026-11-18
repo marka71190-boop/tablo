@@ -186,7 +186,7 @@ function resizePhoto(file,max=1000){
   });
 }
 const photoUrl=id=>id?'/photos/'+id+'.jpg':'';
-const COUNTRIES=[['ru','Россия'],['by','Беларусь'],['kz','Казахстан'],['ua','Украина'],['uz','Узбекистан'],['kg','Киргизия'],['tj','Таджикистан'],['am','Армения'],['az','Азербайджан'],['ge','Грузия'],['md','Молдова'],['lv','Латвия'],['lt','Литва'],['ee','Эстония'],['fi','Финляндия'],['de','Германия'],['none','— без флага —']];
+const COUNTRIES=[['ru','Россия'],['ab','Абхазия'],['by','Беларусь'],['kz','Казахстан'],['ua','Украина'],['uz','Узбекистан'],['kg','Киргизия'],['tj','Таджикистан'],['am','Армения'],['az','Азербайджан'],['ge','Грузия'],['md','Молдова'],['lv','Латвия'],['lt','Литва'],['ee','Эстония'],['fi','Финляндия'],['de','Германия'],['none','— без флага —']];
 const INFO=[['city','Город'],['age','Возраст'],['height','Рост'],['rank','Звание'],['club','Клуб'],['cue','Кий']];
 function formHTML(p){ p=p||{};
   return `<label class="w2">Имя и фамилия<input class="in" name="name" value="${esc(p.name||'')}" required></label>
@@ -335,6 +335,9 @@ function xlsxLib(){
   if(window.XLSX) return Promise.resolve(window.XLSX);
   return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src='/js/xlsx.mini.min.js'; sc.onload=()=>ok(window.XLSX); sc.onerror=no; document.head.appendChild(sc); });
 }
+function winIdx(m){ if(m.xa&&m.b&&!m.xb) return 1; if(m.xb&&m.a&&!m.xa) return 0; if(!m.a||!m.b) return null;
+  if(/тп/i.test(m.ta||'')&&!/тп/i.test(m.tb||'')) return 1; if(/тп/i.test(m.tb||'')&&!/тп/i.test(m.ta||'')) return 0;
+  return m.sa!=null&&m.sb!=null&&m.sa!==m.sb?(m.sa>m.sb?0:1):null; }
 const RN=n=>n===1?'Финал':n===2?'Полуфинал':n===4?'Четвертьфинал':`1/${n} финала`;
 function autoRounds(rounds){
   while(rounds.length&&rounds[rounds.length-1].matches.length>1){
@@ -359,20 +362,49 @@ function parseRows(rows){
   });
   return autoRounds(rounds);
 }
+/* выгрузка bill4you и похожие: блоки «#N Стол X» + дата, ниже два игрока (страна, имя, счёт) */
+const C3={RUS:'ru',BLR:'by',KAZ:'kz',UKR:'ua',UZB:'uz',KGZ:'kg',TJK:'tj',ARM:'am',AZE:'az',GEO:'ge',MDA:'md',LAT:'lv',LVA:'lv',LTU:'lt',EST:'ee',FIN:'fi',GER:'de',DEU:'de',ABH:'ab'};
+function parseBlocks(ws,X){
+  const R=X.utils.decode_range(ws['!ref']||'A1');
+  const v=(r,c)=>{ const cl=ws[X.utils.encode_cell({r,c})]; return cl?cl.v:''; };
+  const sv=(r,c)=>String(v(r,c)??'').trim();
+  const heads=[]; let hr=-1, best=0;
+  for(let r=R.s.r;r<=Math.min(R.e.r,R.s.r+20);r++){ const h=[]; for(let c=R.s.c;c<=R.e.c;c++){ const t=sv(r,c); if(/тур|раунд|финал/i.test(t)) h.push({c,t}); } if(h.length>best){best=h.length;hr=r;heads.splice(0,heads.length,...h);} }
+  const headAt=c=>heads.reduce((b,h)=>h.c<=c&&(!b||h.c>b.c)?h:b,null);
+  const groups={}; let found=0;
+  for(let r=R.s.r;r<=R.e.r;r++) for(let c=R.s.c;c<=R.e.c;c++){
+    const t=sv(r,c), m=/^#\s*(\d+)(?:\s+(?:Стол\s*)?(.*))?$/i.exec(t); if(!m) continue; found++;
+    const pl=i=>{ const name=sv(r+i,c+1), sc=v(r+i,c+2), st=String(sc??'').trim();
+      return {name:name==='X'?'':name, x:name==='X', cc:C3[sv(r+i,c).toUpperCase()]||'', s:typeof sc==='number'?sc:(/^\d+$/.test(st)?+st:null), t:/тп/i.test(st)?'ТП':''}; };
+    const A=pl(1), B=pl(2); let wTo=null, lTo=null;
+    for(let d=3;d<=4;d++){ const e=sv(r+d,c); let q;
+      if((q=/победител\S*\s+на\s+#\s*(\d+)/i.exec(e))) wTo=+q[1];
+      if((q=/проигравш\S*\s+на\s+#\s*(\d+)/i.exec(e))) lTo=+q[1]; }
+    const h=headAt(c), key=h?h.c:-1, side=h&&hr>=0?(/нижн/i.test(sv(hr+1,h.c))?'lower':/верхн/i.test(sv(hr+1,h.c))?'upper':''):'';
+    const g=groups[key]||(groups[key]={name:h?h.t:'Раунд',side,matches:[]});
+    g.matches.push({row:r,no:+m[1],a:A.name,b:B.name,ca:A.cc,cb:B.cc,sa:A.s,sb:B.s,ta:A.t,tb:B.t,xa:A.x,xb:B.x,wTo,lTo,table:m[2]?('Стол '+m[2].trim()):'',time:sv(r,c+2)});
+  }
+  if(found<2) return null;
+  const rounds=Object.values(groups).map(g=>(g.matches.sort((x,y)=>x.row-y.row),g.matches.forEach(m=>delete m.row),g))
+    .sort((x,y)=>Math.min(...x.matches.map(m=>m.no))-Math.min(...y.matches.map(m=>m.no)));
+  return {title:sv(R.s.r,R.s.c),rounds};
+}
 async function loadBr(){ BRK=await api('/api/bracket'); renderBr(); }
 function renderBr(){
   const box=$('brEdit');
   if(!BRK||!BRK.rounds||!BRK.rounds.length){ box.innerHTML='<div class="empty">Сетка не загружена. Скачайте шаблон, заполните игроков первого раунда и загрузите файл.</div>'; return; }
   box.innerHTML=`<div class="row" style="margin-bottom:10px"><input class="in" id="brTitle" placeholder="Название турнира" value="${esc(BRK.title||'')}" style="flex:1"><button class="btn g" id="brSave">Сохранить сетку</button></div>`+
-    BRK.rounds.map((r,ri)=>`<div class="brr"><h4>Раунд <input class="in" data-rn="${ri}" value="${esc(r.name)}"></h4>${r.matches.map((m,k)=>{const wa=m.sa!=null&&m.sb!=null&&m.sa>m.sb, wb=m.sa!=null&&m.sb!=null&&m.sb>m.sa;
-      return `<div class="brm" data-m="${ri}:${k}"><input class="in ${wa?'w':''}" data-f="a" value="${esc(m.a)}" placeholder="Игрок 1"><input class="in" data-f="sa" value="${m.sa??''}" inputmode="numeric"><input class="in" data-f="sb" value="${m.sb??''}" inputmode="numeric"><input class="in ${wb?'w':''}" data-f="b" value="${esc(m.b)}" placeholder="Игрок 2"><input class="in opt" data-f="table" value="${esc(m.table)}" placeholder="Стол"><input class="in opt" data-f="time" value="${esc(m.time)}" placeholder="Время"></div>`}).join('')}</div>`).join('');
+    BRK.rounds.map((r,ri)=>`<div class="brr"><h4>Раунд <input class="in" data-rn="${ri}" value="${esc(r.name)}">${r.side==='lower'?'<span class="muted">нижняя сетка</span>':r.side==='upper'?'<span class="muted">верхняя сетка</span>':''}</h4>${r.matches.map((m,k)=>{const wi=winIdx(m), wa=wi===0, wb=wi===1;
+      return `<div class="brm" data-m="${ri}:${k}"><input class="in ${wa?'w':''}" data-f="a" value="${esc(m.a)}" placeholder="${m.no!=null?'#'+m.no+' ':''}${m.xa?'— пусто —':'Игрок 1'}"><input class="in" data-f="sa" value="${m.sa??m.ta??''}"><input class="in" data-f="sb" value="${m.sb??m.tb??''}"><input class="in ${wb?'w':''}" data-f="b" value="${esc(m.b)}" placeholder="${m.xb?'— пусто —':'Игрок 2'}"><input class="in opt" data-f="table" value="${esc(m.table)}" placeholder="Стол"><input class="in opt" data-f="time" value="${esc(m.time)}" placeholder="Время"></div>`}).join('')}</div>`).join('');
   $('brSave').onclick=saveBr;
 }
 function collectBr(){
   const b={title:$('brTitle').value,rounds:BRK.rounds.map(r=>({name:r.name,matches:r.matches.map(m=>({...m}))}))};
   document.querySelectorAll('[data-rn]').forEach(el=>b.rounds[+el.dataset.rn].name=el.value);
   document.querySelectorAll('.brm').forEach(row=>{ const [ri,k]=row.dataset.m.split(':').map(Number), m=b.rounds[ri].matches[k];
-    row.querySelectorAll('[data-f]').forEach(el=>{ const f=el.dataset.f; m[f]=(f==='sa'||f==='sb')?(el.value.trim()===''?null:+el.value):el.value; }); });
+    row.querySelectorAll('[data-f]').forEach(el=>{ const f=el.dataset.f, v=el.value.trim();
+      if(f==='sa'||f==='sb'){ const t=f==='sa'?'ta':'tb'; if(/тп/i.test(v)){ m[f]=null; m[t]='ТП'; } else { m[f]=v===''||isNaN(+v)?null:+v; m[t]=''; } }
+      else m[f]=el.value; }); });
   return b;
 }
 async function saveBr(){ BRK=await api('/api/bracket',{method:'PUT',body:collectBr()}); toast('Сетка сохранена'); renderBr(); }
@@ -384,10 +416,13 @@ $('brFile').onchange=async e=>{
       let txt; try{ txt=new TextDecoder('utf-8',{fatal:true}).decode(buf) }catch(_){ txt=new TextDecoder('windows-1251').decode(buf) }
       wb=X.read(txt.replace(/^\uFEFF/,''),{type:'string',cellDates:true});
     } else wb=X.read(buf,{type:'array',cellDates:true});
-    const rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:'',raw:true});
-    const rounds=parseRows(rows); if(!rounds.length) throw new Error('В файле не нашлось ни одного матча');
-    BRK=await api('/api/bracket',{method:'PUT',body:{title:(BRK&&BRK.title)||f.name.replace(/\.\w+$/,''),rounds}});
-    toast(`Сетка загружена: ${rounds.length} раунд(а), ${rounds[0].matches.length} матч(ей) в первом`); renderBr();
+    const ws=wb.Sheets[wb.SheetNames[0]], blk=parseBlocks(ws,X);
+    const rounds=blk?blk.rounds:parseRows(X.utils.sheet_to_json(ws,{header:1,defval:'',raw:true}));
+    if(!rounds.length) throw new Error('В файле не нашлось ни одного матча');
+    const title=(blk&&blk.title)||(BRK&&BRK.title)||f.name.replace(/\.\w+$/,'');
+    BRK=await api('/api/bracket',{method:'PUT',body:{title,rounds}});
+    const total=rounds.reduce((n,r)=>n+r.matches.length,0);
+    toast(`Сетка загружена: ${rounds.length} раунд(ов), ${total} матч(ей)`); renderBr();
   }catch(err){ toast(err&&err.message?err.message:'Не удалось прочитать файл',true); }
 };
 $('brTpl').onclick=async()=>{

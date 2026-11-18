@@ -178,7 +178,7 @@ function putState(id, state, el, from) {
 }
 
 /* ===================== matches ===================== */
-const STAT_KEYS = ['frames', 'balls', 'foreign', 'own', 'luck', 'best', 'attacks', 'safeties', 'fouls', 'time', 'shots', 'breaks', 'breaksOk'];
+const STAT_KEYS = ['frames', 'balls', 'foreign', 'own', 'luck', 'best', 'attacks', 'safeties', 'fouls', 'time', 'shots', 'breaks', 'breaksOk', 'fpts'];
 function matchFrom(tableId, st) {
   const t = tableById(tableId) || { name: '' };
   const players = (st.players || []).slice(0, 2).map(p => {
@@ -196,32 +196,59 @@ function csvEscape(v) { v = String(v == null ? '' : v); return /[",;\n]/.test(v)
 const normName = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
 const num = (v) => (v === '' || v == null || isNaN(+v) ? null : +v);
 function cleanBracket(b) {
-  const rounds = (Array.isArray(b && b.rounds) ? b.rounds : []).slice(0, 10).map(r => ({
+  const rounds = (Array.isArray(b && b.rounds) ? b.rounds : []).slice(0, 24).map(r => ({
     name: clean(r && r.name, 40),
-    matches: (Array.isArray(r && r.matches) ? r.matches : []).slice(0, 128).map(m => ({
-      a: clean(m && m.a, 60), b: clean(m && m.b, 60), sa: num(m && m.sa), sb: num(m && m.sb),
+    side: ['upper', 'lower'].includes(r && r.side) ? r.side : '',
+    matches: (Array.isArray(r && r.matches) ? r.matches : []).slice(0, 256).map(m => ({
+      no: num(m && m.no), a: clean(m && m.a, 60), b: clean(m && m.b, 60),
+      ca: clean(m && m.ca, 3).toLowerCase(), cb: clean(m && m.cb, 3).toLowerCase(),
+      sa: num(m && m.sa), sb: num(m && m.sb),
+      ta: clean(m && m.ta, 4), tb: clean(m && m.tb, 4),           // «ТП» — техническое поражение
+      xa: !!(m && m.xa), xb: !!(m && m.xb),                       // «X» — пустое место (проход без игры)
+      wTo: num(m && m.wTo), lTo: num(m && m.lTo),                 // куда идут победитель и проигравший (номер матча)
       table: clean(m && m.table, 30), time: clean(m && m.time, 30)
     }))
   }));
   return { title: clean(b && b.title, 120), rounds, updated: Date.now() };
 }
-const mWinner = (m) => (m.sa != null && m.sb != null && m.sa !== m.sb && m.a && m.b ? (m.sa > m.sb ? m.a : m.b) : null);
-// победитель матча k раунда r проходит в матч floor(k/2) раунда r+1 (k чётный — первым игроком)
+// индекс победителя: 0 — первый игрок, 1 — второй, null — ещё не определён
+function mWinIdx(m) {
+  if (m.xa && m.b && !m.xb) return 1;
+  if (m.xb && m.a && !m.xa) return 0;
+  if (!m.a || !m.b) return null;
+  if (/тп/i.test(m.ta) && !/тп/i.test(m.tb)) return 1;
+  if (/тп/i.test(m.tb) && !/тп/i.test(m.ta)) return 0;
+  if (m.sa != null && m.sb != null && m.sa !== m.sb) return m.sa > m.sb ? 0 : 1;
+  return null;
+}
+const mWinner = (m) => { const i = mWinIdx(m); return i == null ? null : (i ? m.b : m.a); };
+function placeIn(t, name, pref) {
+  if (!t || !name || t.a === name || t.b === name) return;
+  const o = pref === 'b' ? 'a' : 'b';
+  if (!t[pref] && !t['x' + pref]) t[pref] = name; else if (!t[o] && !t['x' + o]) t[o] = name;
+}
+// продвижение по сетке: явные переходы «победитель/проигравший на #N»,
+// иначе в следующий раунд той же стороны: вдвое меньше матчей — матч k/2, столько же — матч k
 function propagate(br) {
-  for (let r = 0; r < br.rounds.length - 1; r++) {
-    br.rounds[r].matches.forEach((m, k) => {
-      const w = mWinner(m), next = br.rounds[r + 1].matches[k >> 1]; if (!w || !next) return;
-      const slot = k % 2 ? 'b' : 'a';
-      if (!next[slot]) next[slot] = w;
+  const byNo = {}; br.rounds.forEach(r => r.matches.forEach(m => { if (m.no != null) byNo[m.no] = m; }));
+  br.rounds.forEach((r, ri) => {
+    let next = null; for (let j = ri + 1; j < br.rounds.length; j++) if (br.rounds[j].side === r.side) { next = br.rounds[j]; break; }
+    r.matches.forEach((m, k) => {
+      const wi = mWinIdx(m); if (wi == null) return;
+      const w = wi ? m.b : m.a, l = wi ? m.a : m.b;
+      if (m.wTo != null) placeIn(byNo[m.wTo], w, 'a');
+      else if (next && next.matches.length * 2 === r.matches.length) placeIn(next.matches[k >> 1], w, k % 2 ? 'b' : 'a');
+      else if (next && next.matches.length === r.matches.length) placeIn(next.matches[k], w, 'a');
+      if (m.lTo != null && l) placeIn(byNo[m.lTo], l, 'a');
     });
-  }
+  });
   return br;
 }
 function bracketResult(mt) {
   const br = get('bracket', null); if (!br || mt.players.length < 2) return;
   const [p, q] = mt.players.map(x => normName(x.name));
   for (const r of br.rounds) for (const m of r.matches) {
-    if (m.sa != null || m.sb != null) continue;
+    if (m.sa != null || m.sb != null || m.ta || m.tb) continue;
     const a = normName(m.a), b = normName(m.b);
     if (a === p && b === q) { m.sa = mt.players[0].frames; m.sb = mt.players[1].frames; }
     else if (a === q && b === p) { m.sa = mt.players[1].frames; m.sb = mt.players[0].frames; }
