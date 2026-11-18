@@ -147,8 +147,8 @@ button{font:inherit;cursor:pointer}
 
 /* ---------- мини-счёт для бокового ракурса ---------- */
 .side{position:absolute;width:600px;background:var(--panel);border-radius:12px;overflow:hidden;box-shadow:0 16px 46px rgba(0,0,0,.6);opacity:0;transition:transform .8s cubic-bezier(.16,1,.3,1),opacity .45s ease}
-.side.tl{left:44px;top:40px;transform:translateX(-120%)}.side.tr{right:44px;top:40px;transform:translateX(120%)}
-.side.bl{left:44px;bottom:44px;transform:translateX(-120%)}.side.br{right:44px;bottom:44px;transform:translateX(120%)}
+.side.sp-tl{left:44px;top:40px;transform:translateX(-120%)}.side.sp-tr{right:44px;top:40px;transform:translateX(120%)}
+.side.sp-bl{left:44px;bottom:44px;transform:translateX(-120%)}.side.sp-br{right:44px;bottom:44px;transform:translateX(120%)}
 .on .side{transform:none;opacity:1}
 .sd-h{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;height:36px;padding:0 14px;background:linear-gradient(90deg,var(--g2),var(--g),var(--g2));color:var(--gt);font:600 18px Oswald;letter-spacing:2px;text-transform:uppercase}
 .sd-h img{max-height:26px;max-width:80px;object-fit:contain;display:block}
@@ -1146,7 +1146,7 @@ function racePhrase(){
 function updSide(c){
   const C=S.cfg, [A,B]=S.players, w=winner();
   const pos=VIEW_POS||C.sidePos||'tl';
-  const sd=c.querySelector('[data-k="sd"]'); sd.className='side '+pos;
+  const sd=c.querySelector('[data-k="sd"]'); sd.className='side sp-'+pos; // уникальные классы: «bl» уже занят шаром в плашке
   setK(c,'sdL',C.logo?`<img src="${esc(C.logo)}" alt="">`:'');
   setK(c,'sdT',esc([S.title,S.subtitle].filter(Boolean).join(' · ')));
   setK(c,'sdR',esc(racePhrase()));
