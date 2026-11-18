@@ -12,7 +12,7 @@ body{font-family:'Roboto Condensed',system-ui,sans-serif;background:#070b16;colo
 button{font:inherit;cursor:pointer}
 
 /* =================== STAGE 1920x1080 · «Сукно и золото» =================== */
-.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;color:#f1ead6;overflow:hidden;font-family:'Roboto Condensed',sans-serif;
+.stage{position:relative;flex:none;width:1920px;height:1080px;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#f1ead6;overflow:hidden;font-family:'Roboto Condensed',sans-serif;
   --panel:rgba(14,16,15,.95);--plate:#1b1f1d;--plateT:#f1ead6;--mid:#0a3d24;--lbl:#0d2b1c;--lblT:#d8c99c;--r:14px}
 .bg-dark{background:radial-gradient(ellipse at 50% 40%,#2c6b4a 0%,#123826 45%,#06140d 100%)}
 .bg-green{background:#00b140}
@@ -63,7 +63,7 @@ button{font:inherit;cursor:pointer}
 .nm{display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--plate);color:var(--plateT);min-width:0}
 .nm.b{flex-direction:row-reverse}
 .nm .t{font:600 30px Oswald;text-transform:uppercase;white-space:nowrap;overflow:hidden;min-width:0}
-.fitx{white-space:nowrap;overflow:hidden;min-width:0}
+.fitx{white-space:nowrap;overflow:hidden;min-width:0;text-overflow:ellipsis}
 .nm .dot{flex:none;width:13px;height:13px;border-radius:50%;background:var(--g);animation:dotp 1.6s ease-in-out infinite}
 .nm em{flex:none;font:500 17px Oswald;font-style:normal;text-transform:uppercase;letter-spacing:1px;color:var(--lblT);opacity:.85}
 .nm em.w{color:var(--g);opacity:1;letter-spacing:2px;animation:pulse 1.4s infinite}
@@ -145,15 +145,15 @@ button{font:inherit;cursor:pointer}
 /* ============ OVERLAY MODE ============ */
 body.overlay{background:transparent;overflow:hidden}
 body.overlay #panel{display:none}
-#ovWrap{display:none;position:fixed;inset:0}
-body.overlay #ovWrap{display:block}
+#ovWrap{display:none;position:fixed;inset:0;align-items:center;justify-content:center;overflow:hidden}
+body.overlay #ovWrap{display:flex}
 
 /* ============ CONTROL PANEL ============ */
 #panel{max-width:1180px;margin:0 auto;padding:14px 14px 60px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .top h1{font:600 22px Oswald;text-transform:uppercase;letter-spacing:2px}
 .top h1 b{color:#c9a14a}
-.pv{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:10px;border:1px solid #1d2742;background:repeating-conic-gradient(#121a2e 0 25%,#0d1424 0 50%) 0 0/24px 24px}
+.pv{position:relative;display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:10px;border:1px solid #1d2742;background:repeating-conic-gradient(#121a2e 0 25%,#0d1424 0 50%) 0 0/24px 24px}
 .seg{display:inline-flex;flex-wrap:wrap;background:#0f1628;border:1px solid #1d2742;border-radius:9px;padding:3px;gap:2px}
 .seg button{background:transparent;border:0;color:#aab4cb;padding:8px 12px;border-radius:7px;font-size:14px;font-weight:500}
 .seg button.act{background:#c9a14a;color:#14110a}
@@ -254,7 +254,7 @@ body.wait #pcols,body.wait .turn{opacity:.4;pointer-events:none}
 
   <div class="card2 links">
     <div class="hd2"><span><a href="/" class="back">← Все столы</a> · <b id="tblName" style="color:#fff"></b></span><span class="net" id="net">Подключение…</span></div>
-    <div class="lk"><span>Ссылка для OBS — источник «Браузер», 1920×1080</span><input readonly id="obsUrl"><button class="sm" data-copy="obsUrl">Копировать</button></div>
+    <div class="lk"><span>Ссылка для OBS — источник «Браузер», 3840×2160 (4K)</span><input readonly id="obsUrl"><button class="sm" data-copy="obsUrl">Копировать</button></div>
   </div>
 
   <div class="pv" id="pv"></div>
@@ -716,22 +716,29 @@ function updateStage(c,first){
   const apply=()=>c.querySelectorAll('.scr').forEach(e=>e.classList.toggle('on',e.dataset.s===scr));
   if(first) requestAnimationFrame(()=>requestAnimationFrame(apply)); else apply();
   fitText(c);
-  if(first&&document.fonts) document.fonts.ready.then(()=>fitText(c));
+  if(first&&document.fonts) document.fonts.ready.then(()=>{ fit(c); fitText(c); });
   tick(c);
 }
 /* уменьшает шрифт, пока текст не влезет в плашку */
 function fitText(root){
+  const over=el=>el.scrollWidth>el.clientWidth+1;
   root.querySelectorAll('.fitx').forEach(el=>{
-    el.style.fontSize=''; if(el.scrollWidth<=el.clientWidth+1) return;
-    let fs=parseFloat(getComputedStyle(el).fontSize); const min=fs*.55;
-    while(el.scrollWidth>el.clientWidth+1&&fs>min){ fs-=1; el.style.fontSize=fs+'px'; }
+    if(el.dataset.full) el.textContent=el.dataset.full;
+    el.style.fontSize=''; if(!over(el)) return;
+    const fs0=parseFloat(getComputedStyle(el).fontSize), min=fs0*.6;
+    const shrink=()=>{ let fs=fs0; el.style.fontSize=''; while(over(el)&&fs>min){ fs-=1; el.style.fontSize=fs+'px'; } };
+    shrink();
+    // всё ещё не влезает — «Константин Константинопольский» → «К. Константинопольский»
+    const w=el.textContent.trim().split(/\s+/);
+    if(over(el)&&w.length>1&&!/\d/.test(el.textContent)){ el.dataset.full=el.textContent; el.textContent=w[0][0]+'. '+w.slice(1).join(' '); shrink(); }
   });
 }
 function fit(container){
   const st=container.querySelector('.stage'); if(!st) return;
+  // zoom, а не transform: браузер заново раскладывает и рисует всё в реальном разрешении
+  // (3840×2160 в OBS = чёткий 4K), без растягивания картинки 1920×1080
   const k=Math.min(container.clientWidth/1920,container.clientHeight/1080);
-  const ox=(container.clientWidth-1920*k)/2, oy=(container.clientHeight-1080*k)/2;
-  st.style.transform=`translate(${ox}px,${oy}px) scale(${k})`;
+  st.style.zoom=k;
 }
 
 /* ---- panel ---- */
@@ -881,7 +888,7 @@ $('undoBtn').onclick=undo;
 document.addEventListener('change',e=>{const t=e.target;
   if(t.dataset.si!=null){ S.cfg.stats[+t.dataset.si].on=t.checked; save(); renderCfg(true); }
   else if(t.dataset.cfg){ S.cfg[t.dataset.cfg]=t.checked; save(); }
-  else if(t.dataset.ph!=null){ uploadImg(t.files[0],t.dataset.kind==='body'?1200:640,url=>{ snap(); S.players[+t.dataset.ph][t.dataset.kind]=url; save(); }); t.value=''; }
+  else if(t.dataset.ph!=null){ uploadImg(t.files[0],t.dataset.kind==='body'?2200:1000,url=>{ snap(); S.players[+t.dataset.ph][t.dataset.kind]=url; save(); }); t.value=''; }
 });
 document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset.sl!=null){ const x=S.cfg.stats[+t.dataset.sl]; const v=t.value.trim(); x.label=(v===STATDEF[x.id][0])?'':v; save(); }
@@ -919,6 +926,11 @@ bind('fCtA',v=>S.players[0].country=v,'change'); bind('fCtB',v=>S.players[1].cou
   p.photo=pl.photoId?'/photos/'+pl.photoId+'.jpg':''; p.body=pl.bodyId?'/photos/'+pl.bodyId+'.jpg':'';
   p.country=pl.country||'ru'; p.info={}; INFO.forEach(([k])=>{ if(pl[k]) p.info[k]=pl[k] }); save();
 }));
+/* картинки храним в высоком разрешении для 4K: с прозрачностью — WebP (меньше PNG), остальное — JPEG */
+function encodeImg(c,alpha){
+  if(alpha){ const w=c.toDataURL('image/webp',.92); return w.startsWith('data:image/webp')?w:c.toDataURL('image/png'); }
+  return c.toDataURL('image/jpeg',.92);
+}
 function uploadImg(file,max,done){
   if(!file) return;
   const keepAlpha=/png|webp|gif|svg/.test(file.type);
@@ -926,17 +938,17 @@ function uploadImg(file,max,done){
   r.onload=()=>{const img=new Image();img.onload=()=>{
     const k=Math.min(1,max/Math.max(img.width,img.height));
     const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const cx=c.getContext('2d'); cx.imageSmoothingQuality='high'; cx.drawImage(img,0,0,c.width,c.height);
     toast('Загружаю…');
-    fetch('/api/photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo:keepAlpha?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.88)})})
+    fetch('/api/photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({photo:encodeImg(c,keepAlpha)})})
       .then(r=>r.json()).then(j=>{ if(!j.id) throw 0; done('/photos/'+j.id+'.jpg'); toast('Загружено'); })
       .catch(()=>toast('Не удалось загрузить картинку',true));
   };img.onerror=()=>toast('Это не картинка',true);img.src=r.result};
   r.readAsDataURL(file);
 }
-$('fLogo').onchange=e=>{ uploadImg(e.target.files[0],600,url=>{ snap(); S.cfg.logo=url; save(); renderCfg(true); }); e.target.value=''; };
+$('fLogo').onchange=e=>{ uploadImg(e.target.files[0],1200,url=>{ snap(); S.cfg.logo=url; save(); renderCfg(true); }); e.target.value=''; };
 $('clrLogo').onclick=()=>{ snap(); S.cfg.logo=''; save(); renderCfg(true); };
-$('fSpons').onchange=e=>{ [...e.target.files].forEach(f=>uploadImg(f,800,url=>{ S.cfg.sponsors=(S.cfg.sponsors||[]).concat(url); save(); renderCfg(true); })); e.target.value=''; };
+$('fSpons').onchange=e=>{ [...e.target.files].forEach(f=>uploadImg(f,1200,url=>{ S.cfg.sponsors=(S.cfg.sponsors||[]).concat(url); save(); renderCfg(true); })); e.target.value=''; };
 $('newFrameStats').onclick=()=>{snap();S.players.forEach(p=>{const n=blankP(p.name);Object.assign(p,n,{name:p.name,photo:p.photo,body:p.body,country:p.country,info:p.info,playerId:p.playerId,frames:p.frames,balls:p.balls})});S.series=0;S.fs=newFs(S.players,mel());S.lastFrame=null;clockRestart();save()};
 function freshMatch(){
   S.players.forEach(p=>Object.assign(p,blankP(p.name),{name:p.name,photo:p.photo,body:p.body,country:p.country,info:p.info,playerId:p.playerId}));
