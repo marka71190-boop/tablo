@@ -141,6 +141,104 @@ button{font:inherit;cursor:pointer}
 .on .sptile{animation:zoomIn .8s cubic-bezier(.16,1,.3,1) forwards;animation-delay:var(--d)}
 .on .sptile.cur{animation:zoomIn .8s cubic-bezier(.16,1,.3,1) forwards,glow 2.2s ease-in-out infinite;animation-delay:var(--d),0s}
 .spcard.big .sptile{width:560px;height:280px}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .5s ease,transform .8s cubic-bezier(.16,1,.3,1)}
+.on .rv{opacity:1;transform:none;transition-delay:var(--d,0s)}
+
+/* ---------- бегущая строка ---------- */
+.stage.tk .bug{bottom:66px}
+.ticker{position:absolute;left:0;right:0;bottom:0;height:52px;display:flex;background:rgba(10,12,11,.96);border-top:2px solid var(--g);transform:translateY(110%);transition:transform .7s cubic-bezier(.16,1,.3,1);z-index:5}
+.ticker.on{transform:none}
+.tk-l{flex:none;display:flex;align-items:center;padding:0 40px 0 24px;background:linear-gradient(90deg,var(--g2),var(--g));color:var(--gt);font:600 23px Oswald;letter-spacing:2px;text-transform:uppercase;clip-path:polygon(0 0,100% 0,calc(100% - 20px) 100%,0 100%)}
+.tk-l:empty{display:none}
+.tk-v{flex:1;overflow:hidden;position:relative;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50px,#000 calc(100% - 50px),transparent);mask-image:linear-gradient(90deg,transparent,#000 50px,#000 calc(100% - 50px),transparent)}
+.tk-t{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:center;white-space:nowrap;font:500 27px 'Roboto Condensed';color:#f1ead6;animation:tk var(--dur,30s) linear infinite;will-change:transform}
+.tk-t span{padding:0 26px}.tk-t i{color:var(--g);font-style:normal;font-size:18px}
+@keyframes tk{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ---------- история партий (вкладка над плашкой слева) ---------- */
+.fhtab{position:absolute;left:24px;bottom:100%;display:flex;align-items:center;gap:4px;height:58px;padding:0 12px;background:var(--panel);border-radius:12px 12px 0 0;border-top:3px solid var(--g);
+  transform:translateY(100%);transition:transform .7s cubic-bezier(.16,1,.3,1) .45s;z-index:-1}
+.on .fhtab.has{transform:none}
+.fh{display:flex;flex-direction:column;align-items:center;padding:0 9px;font:600 24px/1.05 Oswald;color:#cfc6ad;font-variant-numeric:tabular-nums}
+.fh+.fh{border-left:1px solid rgba(201,161,74,.2)}
+.fh small{font:500 12px Oswald;color:#8a836f;letter-spacing:1px}
+.fh b{font-weight:600}.fh b.w{color:var(--g)}
+.fh.new{animation:pop .7s cubic-bezier(.16,1,.3,1)}
+
+/* ---------- титр комментатора / судьи ---------- */
+.lt{position:absolute;left:80px;bottom:262px;display:flex;align-items:stretch;box-shadow:0 18px 50px rgba(0,0,0,.55);border-radius:10px;overflow:hidden;
+  clip-path:inset(0 100% 0 0);opacity:0;transition:clip-path .75s cubic-bezier(.65,0,.35,1),opacity .3s ease}
+.lt.on{clip-path:inset(0 0 0 0);opacity:1}
+.stage.tk .lt{bottom:280px}
+.lt-bar{width:12px;background:linear-gradient(180deg,var(--g),var(--g2))}
+.lt-b{background:var(--panel);padding:14px 34px 14px 22px}
+.lt-n{font:600 46px/1.1 Oswald;text-transform:uppercase;color:#f1ead6;white-space:nowrap}
+.lt-r{font:500 24px Oswald;color:var(--g);text-transform:uppercase;letter-spacing:3px}
+
+/* ---------- перерыв ---------- */
+.brk{position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+.on .brk{opacity:1}
+.brk-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,#1f5a3d 0%,#0b2418 55%,#050c08 100%);overflow:hidden}
+.brk-bg img,.brk-bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.brk-sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,8,6,.35),rgba(5,8,6,.7))}
+.brk-c{position:absolute;left:0;right:0;top:90px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.brk-lg{height:150px;display:flex;align-items:center}.brk-lg img{max-height:150px;max-width:420px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(0,0,0,.6))}
+.brk-t{font:700 130px/1.05 Oswald;letter-spacing:14px;color:var(--g);text-transform:uppercase;text-shadow:0 6px 30px rgba(0,0,0,.6)}
+.brk-s{font:500 40px Oswald;letter-spacing:6px;color:#f1ead6;text-transform:uppercase;margin-top:6px}
+.brk-n{font:700 180px/1 Oswald;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 8px 40px rgba(0,0,0,.6)}
+.brk-sc{display:grid;grid-template-columns:520px 110px 110px 520px;margin-top:34px;background:var(--panel);border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.brk-sc .n{display:flex;align-items:center;justify-content:center;gap:14px;padding:0 20px;height:84px;font:600 38px Oswald;text-transform:uppercase;background:var(--plate)}
+.brk-sc .n .flag{width:48px;height:32px;flex:none}
+.brk-sc .f{display:grid;place-items:center;font:700 56px Oswald;background:linear-gradient(180deg,var(--g),var(--g2));color:var(--gt)}
+.brk-sc .f+.f{border-left:2px solid rgba(0,0,0,.35)}
+.brk-sp{position:absolute;left:0;right:0;bottom:70px;display:flex;justify-content:center;gap:26px}
+.stage.tk .brk-sp{bottom:96px}
+.brk-sp .sptile{width:260px;height:130px;padding:16px}
+
+/* ---------- победитель ---------- */
+.win{position:absolute;inset:0;background:radial-gradient(ellipse at 28% 55%,rgba(201,161,74,.38),rgba(20,18,12,.94) 55%,rgba(8,8,6,.98));opacity:0;transition:opacity .9s ease}
+.on .win{opacity:1}
+.spark{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none}
+.win-ph{position:absolute;left:60px;bottom:0;width:760px;height:1020px;opacity:0;transform:translateX(-30%);transition:transform 1.1s cubic-bezier(.16,1,.3,1) .2s,opacity .6s ease .2s}
+.on .win-ph{opacity:1;transform:none}
+.win-ph .body{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 50px rgba(0,0,0,.7))}
+.win-ph .ava{position:absolute;left:90px;right:90px;top:170px;height:700px;border-radius:16px;overflow:hidden;box-shadow:0 0 0 4px var(--g),0 30px 80px rgba(0,0,0,.7)}
+.win-ph .ava img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.win-ph svg.sil{position:absolute;left:0;bottom:0;width:100%;height:90%}
+.win-r{position:absolute;left:860px;right:80px;top:110px}
+.win-cup{font:500 30px Oswald;color:#d8c99c;letter-spacing:6px;text-transform:uppercase}
+.win-t{font:700 96px/1 Oswald;color:var(--g);letter-spacing:5px;text-transform:uppercase;margin-top:10px;text-shadow:0 0 40px rgba(201,161,74,.45)}
+.win-n{display:flex;align-items:center;gap:22px;font:700 104px/1.05 Oswald;color:#fff;text-transform:uppercase;margin-top:26px;white-space:nowrap}
+.win-n .flag{width:96px;height:64px;flex:none;box-shadow:0 0 0 3px var(--g)}
+.win-m{font:500 38px Oswald;color:#f1ead6;margin-top:14px;letter-spacing:1px}
+.win-m b{color:var(--g);font-weight:700}
+.win-g{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:46px}
+.wt{background:rgba(27,31,29,.92);border-radius:14px;padding:18px 24px 16px;border-top:4px solid var(--g);box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.wt b{display:block;font:700 60px/1.05 Oswald;color:var(--g);font-variant-numeric:tabular-nums}
+.wt span{font:500 21px Oswald;color:#d8c99c;text-transform:uppercase;letter-spacing:1.5px}
+.win-sub{font:500 26px Oswald;color:#d8c99c;letter-spacing:3px;text-transform:uppercase;margin-top:40px}
+
+/* ---------- турнирная сетка ---------- */
+.brc{position:absolute;left:40px;right:40px;top:36px;bottom:36px;background:var(--panel);border-radius:var(--r);overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.6);
+  clip-path:inset(0 50% 0 50% round 14px);opacity:0;transition:clip-path .85s cubic-bezier(.65,0,.35,1),opacity .35s ease}
+.stage.tk .brc{bottom:70px}
+.on .brc{clip-path:inset(0 0 0 0 round 14px);opacity:1}
+.brw{position:absolute;left:0;right:0;top:84px;bottom:0}
+.brw svg{position:absolute;inset:0;width:100%;height:100%}
+.brw path{stroke:rgba(201,161,74,.55);stroke-width:2.5;fill:none}
+.rnd{position:absolute;top:14px;text-align:center;font:500 22px Oswald;color:var(--g);letter-spacing:3px;text-transform:uppercase}
+.bm{position:absolute;display:grid;grid-template-rows:1fr 1fr;background:var(--plate);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.4);opacity:0;transform:translateX(-14px);transition:opacity .4s ease,transform .6s cubic-bezier(.16,1,.3,1)}
+.on .bm{opacity:1;transform:none;transition-delay:var(--d)}
+.bm>div{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:0 12px;font:500 var(--bf,22px) Oswald;text-transform:uppercase;color:#e9e1c8;min-width:0}
+.bm>div>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm>div+div{border-top:1px solid rgba(201,161,74,.18)}
+.bm .w{color:var(--g);font-weight:700}
+.bm .l{opacity:.55}
+.bm b{font-weight:700;min-width:22px;text-align:right}
+.bm.live{box-shadow:0 0 0 3px var(--g),0 0 34px rgba(201,161,74,.55)}
+.bm .lv{position:absolute;right:-2px;top:-2px;background:#d7192f;color:#fff;font:700 12px Oswald;letter-spacing:1px;padding:2px 6px;border-radius:0 8px 0 6px;animation:pulse 1.4s infinite}
+.bm .tm{position:absolute;left:12px;top:-18px;font:500 13px Oswald;color:#8a836f;letter-spacing:1px}
+.brempty{position:absolute;inset:0;display:grid;place-items:center;font:500 34px Oswald;color:#8a836f}
 
 /* ============ OVERLAY MODE ============ */
 body.overlay{background:transparent;overflow:hidden}
@@ -233,23 +331,82 @@ body.wait #pcols,body.wait .turn{opacity:.4;pointer-events:none}
 .lk{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-top:8px}
 .lk span{grid-column:span 2;font-size:13px;color:#aab4cb}
 .lk input{background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:9px;font-size:13px;min-width:0}
+.seg.big{grid-template-columns:repeat(9,1fr)}
+.seg.big button{padding:12px 4px;font-size:14px}
+textarea.ta{width:100%;min-height:96px;background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:10px;font:inherit;font-size:15px;resize:vertical}
+.ppl{display:grid;gap:6px;margin-top:8px}
+.ppl .pr{display:grid;grid-template-columns:1fr 1fr auto auto;gap:6px;align-items:center}
+.ppl input{background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:9px;font-size:15px;min-width:0}
+.btn2{border:0;border-radius:9px;padding:10px 14px;font:600 15px 'Roboto Condensed';color:#14110a;background:#c9a14a}
+.btn2.ok{background:#11793f;color:#fff}.btn2.r{background:#8a1426;color:#fff}.btn2.s{background:#141d33;color:#e9edf5;border:1px solid #26314f}
+.bclk{font:700 34px Oswald;font-variant-numeric:tabular-nums;min-width:110px;text-align:center}
+.log{max-height:420px;overflow:auto;margin-top:10px;border:1px solid #1d2742;border-radius:10px}
+.lg-r{display:grid;grid-template-columns:44px 52px 60px 1fr 1fr 34px;gap:6px;align-items:center;padding:6px 8px;border-top:1px solid #141d33;font-size:14px}
+.lg-r:first-child{border-top:0}
+.lg-r.fe{background:#1a1a0f}
+.lg-r .no{color:#8590aa}.lg-r .fr2{color:#c9a14a;font-weight:600}.lg-r .tm2{color:#8590aa;font-variant-numeric:tabular-nums}
+.lg-r select{background:#070b16;border:1px solid #26314f;color:#fff;border-radius:6px;padding:6px;font-size:14px;min-width:0}
+.lg-r span.tx{color:#e9edf5}
+.lg-r button{width:30px;height:30px;border-radius:6px;border:0;background:#3a0b16;color:#ffb3bd}
+.modebtn{background:#141d33;border:1px solid #26314f;color:#e9edf5;border-radius:9px;padding:9px 12px;font-size:14px;font-weight:600}
+
+/* ============ КОМПАКТНЫЙ РЕЖИМ (телефон) ============ */
+#cmp{display:none}
+body.compact #panel{display:none}
+body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto auto auto 1fr auto;gap:8px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:#070b16;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.c-top{display:flex;gap:6px;align-items:center}
+.c-top select{flex:1;min-width:0;background:#141d33;border:1px solid #26314f;color:#fff;border-radius:9px;padding:9px;font:600 15px Oswald;text-transform:uppercase}
+.c-sc{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:stretch}
+.c-p{background:#0e1527;border:2px solid #1d2742;border-radius:12px;padding:8px 10px;min-width:0}
+.c-p.on{border-color:#c9a14a;background:#2c2510}
+.c-p .n{font:600 17px Oswald;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-p .f{font:700 38px/1 Oswald}.c-p .f small{font:500 14px 'Roboto Condensed';color:#aab4cb;margin-left:4px}
+.c-p.r{text-align:right}
+.c-clk{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:92px;border-radius:12px;background:#0e1527;border:1px solid #1d2742}
+.c-clk b{font:700 40px/1 Oswald;font-variant-numeric:tabular-nums}
+.c-clk.warn b{color:#facc15}.c-clk.crit{background:#b91c1c}.c-clk.paused b{opacity:.45}
+.c-clk small{font-size:12px;color:#aab4cb}
+.c-turn{display:grid;grid-template-columns:1fr auto;gap:6px}
+.c-turn .who{display:flex;align-items:center;justify-content:center;gap:8px;background:#c9a14a;color:#14110a;border-radius:12px;padding:10px;font:600 20px Oswald;text-transform:uppercase;white-space:nowrap;overflow:hidden}
+.c-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:8px;min-height:0}
+.c-grid .ab{min-height:0;height:100%;font-size:21px;border-radius:14px}
+.c-grid .ab small{font-size:14px}
+.c-bot{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.c-bot button{min-height:54px;border-radius:12px;border:1px solid #26314f;background:#141d33;color:#e9edf5;font:600 15px 'Roboto Condensed';text-transform:uppercase}
+.c-bot button.ext{border-color:#c9a14a;color:#f1d58a;background:#2c2510}
+.c-bot button:disabled{opacity:.35}
 @media(max-width:700px){
+  .seg.big{grid-template-columns:repeat(3,1fr)}
+  .lg-r{grid-template-columns:36px 44px 1fr 1fr 30px}.lg-r .tm2{display:none}
   .grid2{grid-template-columns:1fr}
   .fields{grid-template-columns:1fr}
   .full2{grid-column:auto}
-  .seg.big{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 </head>
 <body>
 
 <div id="ovWrap"></div>
+<div id="cmp">
+  <div class="c-top"><button class="modebtn" id="toFull">☰ Полный</button><select id="cScr"></select><span class="net" id="net2">…</span></div>
+  <div class="c-sc"><div class="c-p" id="cpA"></div><div class="c-clk" id="cClk"><b id="cClk2">0</b><small id="cMcl">0:00</small></div><div class="c-p r" id="cpB"></div></div>
+  <div class="c-turn"><div class="who" id="cWho"></div><button class="modebtn" id="cSwap" style="font-size:18px">⇄ Ход</button></div>
+  <div class="c-grid" id="cGrid">
+    <button class="ab pot" data-ca="foreign">Чужого<small>прицельный</small></button>
+    <button class="ab own" data-ca="own">Своего<small>свояк</small></button>
+    <button class="ab luck" data-ca="luck">Случайный<small>не по заказу</small></button>
+    <button class="ab miss" data-ca="miss">Промах<small>ход сопернику</small></button>
+    <button class="ab saf" data-ca="safety">Отыгрыш<small>ход сопернику</small></button>
+    <button class="ab foul" data-ca="foul">Штраф<small>ход сопернику</small></button>
+  </div>
+  <div class="c-bot"><button id="cUndo">↶ Назад</button><button id="cPause">⏸ Таймер</button><button class="ext" id="cExt">+30</button><button id="cFrame">+ Партия</button></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <div id="panel">
   <div class="top">
     <h1><b>●</b> Табло · Пирамида</h1>
-    <a class="lnk" id="openOv" href="#overlay" target="_blank" rel="noopener">Открыть табло ↗</a>
+    <span style="display:flex;gap:8px"><button class="modebtn" id="toCompact">📱 Компактный режим</button><a class="lnk" id="openOv" href="#overlay" target="_blank" rel="noopener">Открыть табло ↗</a></span>
   </div>
 
   <div class="card2 links">
@@ -265,6 +422,9 @@ body.wait #pcols,body.wait .turn{opacity:.4;pointer-events:none}
       <button data-v="vs">VS</button>
       <button data-v="frame">Партия</button>
       <button data-v="match">Встреча</button>
+      <button data-v="bracket">Сетка</button>
+      <button data-v="break">Перерыв</button>
+      <button data-v="winner">Победитель</button>
       <button data-v="spons">Спонсоры</button>
       <button data-v="hidden">Скрыть</button>
     </div>
@@ -317,6 +477,7 @@ body.wait #pcols,body.wait .turn{opacity:.4;pointer-events:none}
         <label>Продление, сек<input id="fExt" type="number" min="0" max="600"></label>
         <label>Продлений на партию<input id="fExtN" type="number" min="0" max="10"></label>
       </div>
+      <label class="full2">Матч из турнирной сетки<select id="pickBr"><option value="">— сетка не загружена —</option></select></label>
       <label>Игрок 1<select id="pickA"></select><input id="fNameA" placeholder="или впишите имя"></label>
       <label>Игрок 2<select id="pickB"></select><input id="fNameB" placeholder="или впишите имя"></label>
       <label>Страна игрока 1<select id="fCtA"></select></label>
@@ -340,6 +501,61 @@ body.wait #pcols,body.wait .turn{opacity:.4;pointer-events:none}
       <b>Горячие клавиши:</b> <code>Пробел</code> — пауза таймера удара, <code>Ctrl+Z</code> — отменить.<br>
       <b>Учёт:</b> атака — любой удар на забивание. «Случайный» — шар, забитый не по заказу: идёт в счёт партии и в серию. Ошибки — промахи ÷ атаки. Начальный удар удачный, если с него забит шар.
     </div>
+  </details>
+
+  <details class="card2 set" id="logBox">
+    <summary>Журнал ударов</summary>
+    <div class="hint" style="margin-top:6px">Любое действие можно исправить (игрок, тип удара) или удалить — вся статистика, счёт и история партий пересчитаются.</div>
+    <div class="log" id="logList"></div>
+  </details>
+
+  <details class="card2 set">
+    <summary>Перерыв</summary>
+    <div class="bar2">
+      <span class="bclk" id="pClock">5:00</span>
+      <button class="btn2 ok" id="pStart">▶ Старт</button>
+      <button class="btn2 s" id="pStop">⏸ Пауза</button>
+      <button class="btn2 s" id="pReset">↺ Сброс</button>
+      <button class="btn2" id="pShow">Показать перерыв</button>
+    </div>
+    <div class="fields">
+      <label>Длительность, минут<input id="fPDur" type="number" min="1" max="180"></label>
+      <label>Заголовок<input id="fPTitle" placeholder="Перерыв"></label>
+      <label>Подпись над таймером<input id="fPSub" placeholder="Продолжение через"></label>
+      <label>Когда время вышло<input id="fPEnd" placeholder="Скоро продолжим"></label>
+    </div>
+    <div class="sub2">Свой фон перерыва (картинка или видео MP4/WebM до 40 МБ)</div>
+    <div class="photo-in" style="margin-top:8px"><span class="th" id="thPBg"></span><input type="file" accept="image/*,video/mp4,video/webm" id="fPBg"><button class="sm" id="clrPBg">✕</button></div>
+    <div class="chks"><label class="chk"><input type="checkbox" data-cfg="pScore"> Показывать счёт</label><label class="chk"><input type="checkbox" data-cfg="pSpons"> Показывать спонсоров</label></div>
+  </details>
+
+  <details class="card2 set">
+    <summary>Бегущая строка</summary>
+    <div class="chks"><label class="chk"><input type="checkbox" data-cfg="tkOn"> Показывать бегущую строку (на счёте и в перерыве)</label></div>
+    <div class="fields">
+      <label>Надпись слева<input id="fTkLabel" placeholder="Новости"></label>
+      <label>Скорость (пикс/сек)<input id="fTkSpeed" type="number" min="30" max="400"></label>
+      <label class="full2">Тексты — каждая строка отдельным сообщением<textarea class="ta" id="fTk" placeholder="Следующий матч: Иванов — Петров, 19:00&#10;Скидка 20% на аренду стола по будням до 16:00"></textarea></label>
+    </div>
+  </details>
+
+  <details class="card2 set">
+    <summary>Титры: комментатор, судья</summary>
+    <div class="ppl" id="pplList"></div>
+    <div class="bar2"><button class="btn2 s" id="pplAdd">+ Добавить человека</button><button class="btn2 r" id="ltHide">Скрыть титр</button></div>
+    <div class="fields" style="max-width:420px"><label>Показывать, сек<input id="fLtDur" type="number" min="2" max="60"></label></div>
+  </details>
+
+  <details class="card2 set">
+    <summary>Победитель и история партий</summary>
+    <div class="fields">
+      <label class="full2">Надпись на экране победителя<input id="fWinTitle" placeholder="Победитель турнира"></label>
+    </div>
+    <div class="chks">
+      <label class="chk"><input type="checkbox" data-cfg="autoWin"> Показывать экран победителя сразу после последней партии</label>
+      <label class="chk"><input type="checkbox" data-cfg="fhist"> История партий над плашкой (счёт шаров по партиям)</label>
+    </div>
+    <div class="hint">Статистика за турнир собирается из сохранённых матчей с тем же названием турнира плюс текущий матч.</div>
   </details>
 
   <details class="card2 set">
@@ -383,12 +599,16 @@ const counters=p=>Object.fromEntries(CNT.map(k=>[k,p[k]||0]));
 const STAT_ON0=['brk','best','attacks','foreign','own','luck','err','fouls','time'];
 const STAT_ALL=['brk','best','attacks','foreign','own','luck','made','pct','err','saf','fouls','time','misses','shots','frames'];
 const DEFCFG=()=>({v:2,stats:STAT_ALL.map(id=>({id,on:STAT_ON0.includes(id),label:''})).sort((a,b)=>(STAT_ON0.indexOf(a.id)+1||99)-(STAT_ON0.indexOf(b.id)+1||99)),
-  photos:true,flags:true,title:true,timer:true,mclock:true,balls:true,acc:'#c9a14a',logo:'',sponsors:[],spInt:8,spBug:true});
+  photos:true,flags:true,title:true,timer:true,mclock:true,balls:true,acc:'#c9a14a',logo:'',sponsors:[],spInt:8,spBug:true,
+  tkOn:false,tk:'',tkLabel:'Новости',tkSpeed:110,people:[],ltDur:6,
+  pTitle:'Перерыв',pSub:'Продолжение через',pEnd:'Скоро продолжим',pBg:'',pBgKind:'',pScore:true,pSpons:true,
+  winTitle:'Победитель турнира',autoWin:true,fhist:true,brFrom:0});
 const newFs=(players,at)=>({base:players.map(counters),at:at||0,best:[0,0],brk:null});
 const DEF=()=>({cfg:null,title:'Кубок клуба',subtitle:'Финал',raceTo:5,ballsTo:8,screen:'bug',bg:'transparent',
   players:[blankP('Игрок 1'),blankP('Игрок 2')],turn:0,series:0,
   clock:{running:true,start:Date.now(),acc:0},shotExt:0,mclock:{running:false,start:Date.now(),acc:0},
-  shot:{mode:'down',limit:45,ext:30,extN:1},fs:null,lastFrame:null,updatedAt:0});
+  shot:{mode:'down',limit:45,ext:30,extN:1},fs:null,lastFrame:null,updatedAt:0,
+  log:[],base0:null,frameLog:[],pclock:{running:false,start:Date.now(),acc:0},pdur:300000,lt:null,win:null,winShown:false});
 const clone=o=>JSON.parse(JSON.stringify(o));
 function norm(s){
   s=s||{}; const o=Object.assign(DEF(),s);
@@ -401,21 +621,35 @@ function norm(s){
   o.players=[0,1].map(i=>{const p=Object.assign(blankP('Игрок '+(i+1)),(s.players||[])[i]||{}); p.info=p.info||{}; return p});
   if(!o.fs||!o.fs.base) o.fs=newFs(o.players,0);
   if(!o.mclock) o.mclock={running:false,start:Date.now(),acc:0};
+  if(!o.pclock) o.pclock={running:false,start:Date.now(),acc:0};
+  if(!Array.isArray(o.frameLog)) o.frameLog=[];
+  if(!Array.isArray(s.log)){ // состояние из старой версии без журнала: текущие цифры становятся стартовыми
+    o.log=[]; o.base0={pl:o.players.map(p=>Object.assign(counters(p),{frames:p.frames,balls:p.balls,best:p.best,extUsed:p.extUsed||0})),turn:o.turn,at:o.fs.at||0};
+  }
+  if(!o.base0) o.base0=zeroBase();
   return o;
 }
 let S, hist=[], ready=false, lastRev=0;
 
 let lastLocal=0;
 function save(){
+  if(!isOverlay()){ const w=winner();
+    if(w<0) S.winShown=false;
+    else if(!S.winShown){ S.winShown=true; if(S.cfg.autoWin){ S.screen='winner'; setTimeout(computeWin,30); } } }
   S.updatedAt=Date.now(); lastLocal=Date.now();
   push(); renderAll();
 }
 /* state as sent over the wire: match clock as elapsed time, so devices with different clocks agree */
-function wire(){ return Object.assign({},S,{mclock:{running:S.mclock.running,acc:mel(),start:0}}); }
+function wire(){
+  const o=Object.assign({},S,{mclock:{running:S.mclock.running,acc:mel(),start:0},pclock:{running:S.pclock.running,acc:pel(),start:0}});
+  if(S.lt) o.lt=Object.assign({},S.lt,{el:Date.now()-S.lt.shown,shown:0});
+  return o;
+}
+const relClock=(c,age,now)=>{ const a=(+(c&&c.acc)||0)+(c&&c.running?age:0); return c&&c.running?{running:true,start:now-a,acc:0}:{running:false,start:now,acc:a}; };
 
 /* ---- sync with our server (WebSocket, HTTP fallback) ---- */
 let ws=null, wsOpen=false, wsFails=0, polling=null;
-function setNet(ok,txt){const n=document.getElementById('net'); if(n){n.textContent=txt;n.classList.toggle('ok',ok)}}
+function setNet(ok,txt){['net','net2'].forEach(id=>{const n=document.getElementById(id); if(n){n.textContent=txt;n.classList.toggle('ok',ok)}})}
 function toast(t,err){const e=$('toast'); if(!e) return; e.textContent=t; e.classList.toggle('err',!!err); e.classList.add('show'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('show'),2600)}
 function push(){
   if(!ready||isOverlay()) return;
@@ -432,11 +666,11 @@ function apply(m,fromPoll){
   lastRev=Math.max(lastRev,m.rev||0);
   if(!m.state){ const first=!ready; ready=true; document.body.classList.remove('wait'); if(first&&!isOverlay()) push(); renderAll(true); return; }
   const now=Date.now(), el=+m.el||0, age=+m.age||0;
-  const mc=m.state.mclock||{};
+  const mc=m.state.mclock, pc=m.state.pclock, lt=m.state.lt;
   S=norm(m.state);
   S.clock=S.clock.running?{running:true,start:now-el,acc:0}:{running:false,start:now,acc:el};
-  const mAcc=(+mc.acc||0)+(mc.running?age:0);
-  S.mclock=mc.running?{running:true,start:now-mAcc,acc:0}:{running:false,start:now,acc:mAcc};
+  S.mclock=relClock(mc,age,now); S.pclock=relClock(pc,age,now);
+  if(lt) S.lt=Object.assign({},lt,{shown:now-((+lt.el||0)+age)});
   ready=true; document.body.classList.remove('wait');
   renderAll(true);
 }
@@ -472,6 +706,8 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 /* ---- clocks ---- */
 const elapsed=()=>S.clock.acc+(S.clock.running?Date.now()-S.clock.start:0);
 const mel=()=>S.mclock.acc+(S.mclock.running?Date.now()-S.mclock.start:0);
+const pel=()=>S.pclock.acc+(S.pclock.running?Date.now()-S.pclock.start:0);
+const pLeft=()=>Math.max(0,S.pdur-pel());
 const fmt=ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const fmtH=ms=>{const s=Math.floor(Math.max(0,ms)/1000),h=Math.floor(s/3600),m=Math.floor(s/60)%60,x=String(s%60).padStart(2,'0');return h?h+':'+String(m).padStart(2,'0')+':'+x:String(m).padStart(2,'0')+':'+x};
 function clockRestart(){S.clock={running:true,start:Date.now(),acc:0}; S.shotExt=0;}
@@ -483,41 +719,67 @@ function shotInfo(){
   return {up:false,txt:String(secs),frac:Math.max(0,left/tot),secs,left};
 }
 
-/* ---- actions ---- */
-function pass(){S.turn=1-S.turn;S.series=0}
-function endFrame(){
-  const st=frameStats();
-  S.lastFrame={n:S.players[0].frames+S.players[1].frames,p:st,dur:Math.max(0,mel()-S.fs.at),brk:S.fs.brk};
-  S.players.forEach(q=>{q.balls=0;q.extUsed=0});
-  S.series=0; S.fs=newFs(S.players,mel());
+/* ---- журнал действий: весь матч пересчитывается из списка событий ---- */
+const SHOTS=['foreign','own','luck','miss','safety','foul'];
+const EVN={foreign:'Чужой',own:'Свой',luck:'Случайный',miss:'Промах',safety:'Отыгрыш',foul:'Штраф','frame+':'+ Партия','frame-':'− Партия','ball+':'Шар +1','ball-':'Шар −1',ext:'Продление',turn:'Передача хода',reset:'Сброс статистики'};
+function zeroBase(){return {pl:[0,1].map(()=>Object.assign(counters({}),{frames:0,balls:0,best:0,extUsed:0})),turn:0,at:0}}
+function endFrameS(X,w,mt){
+  const [A,B]=X.players, dur=Math.max(0,mt-X.fs.at);
+  X.lastFrame={n:A.frames+B.frames,p:frameStats(X),dur,brk:X.fs.brk};
+  X.frameLog.push({w,a:A.balls,b:B.balls,dur});
+  X.players.forEach(q=>{q.balls=0;q.extUsed=0});
+  X.series=0; X.fs=newFs(X.players,mt);
 }
-function act(i,t){
-  snap(); mStart();
-  const p=S.players[i];
-  if(S.turn!==i){S.turn=i;S.series=0}
-  p.time+=elapsed(); p.shots++;
-  const pot=t==='foreign'||t==='own'||t==='luck';
-  if(!S.fs.brk){ p.breaks++; if(pot) p.breaksOk++; S.fs.brk={i,ok:pot}; }
-  if(pot){
-    p[t]++; if(t!=='luck') p.attacks++; S.series++; p.best=Math.max(p.best,S.series); S.fs.best[i]=Math.max(S.fs.best[i],S.series);
-    p.balls++;
-    if(S.ballsTo>0&&p.balls>=S.ballsTo){ p.frames++; endFrame(); }
-  }else if(t==='miss'){p.attacks++; pass();}
-  else if(t==='safety'){p.safeties++; pass();}
-  else if(t==='foul'){p.fouls++; pass();}
-  clockRestart(); save();
+function applyEv(X,e){
+  const i=e.i, p=X.players[i], t=e.t; if(!p) return;
+  const pass=()=>{X.turn=1-i;X.series=0};
+  if(SHOTS.includes(t)){
+    if(X.turn!==i){X.turn=i;X.series=0}
+    p.time+=e.pr||0; p.shots++;
+    const pot=t==='foreign'||t==='own'||t==='luck';
+    if(!X.fs.brk){ p.breaks++; if(pot) p.breaksOk++; X.fs.brk={i,ok:pot}; }
+    if(pot){
+      p[t]++; if(t!=='luck') p.attacks++; X.series++; p.best=Math.max(p.best,X.series); X.fs.best[i]=Math.max(X.fs.best[i]||0,X.series);
+      p.balls++; const bt=e.bt??X.ballsTo;
+      if(bt>0&&p.balls>=bt){ p.frames++; endFrameS(X,i,e.mt||0); }
+    }
+    else if(t==='miss'){p.attacks++; pass();}
+    else if(t==='safety'){p.safeties++; pass();}
+    else {p.fouls++; pass();}
+  }
+  else if(t==='frame+'){ p.frames++; endFrameS(X,i,e.mt||0); }
+  else if(t==='frame-'){ if(p.frames>0){ p.frames--; for(let k=X.frameLog.length-1;k>=0;k--) if(X.frameLog[k].w===i){X.frameLog.splice(k,1);break} } X.series=0; }
+  else if(t==='ball+') p.balls++;
+  else if(t==='ball-') p.balls=Math.max(0,p.balls-1);
+  else if(t==='ext') p.extUsed++;
+  else if(t==='turn'){ X.turn=i; X.series=0; }
+  else if(t==='reset'){ X.players.forEach(q=>{CNT.forEach(k=>q[k]=0);q.best=0}); X.series=0; X.fs=newFs(X.players,e.mt||0); X.lastFrame=null; }
 }
-function frame(i,d){
-  snap(); const p=S.players[i];
-  p.frames=Math.max(0,p.frames+d); if(d>0){ mStart(); endFrame(); } S.series=0; clockRestart(); save();
+function replay(X,cb){
+  const b=X.base0||zeroBase();
+  X.players.forEach((p,k)=>Object.assign(p,clone(b.pl[k])));
+  X.turn=b.turn||0; X.series=0; X.frameLog=[]; X.lastFrame=null; X.fs=newFs(X.players,b.at||0);
+  X.log.forEach((e,k)=>{ if(cb) cb(e,k,X); applyEv(X,e); });
 }
-function ball(i,d){ snap(); const p=S.players[i]; p.balls=Math.max(0,p.balls+d); save(); }
+function ev(t,i,pre){
+  snap(); mStart(); if(pre) pre();
+  const e={t,i,mt:mel()}; if(SHOTS.includes(t)){ e.pr=elapsed(); e.bt=S.ballsTo; }
+  S.log.push(e); applyEv(S,e);
+  if(SHOTS.includes(t)||t==='frame+'||t==='frame-'||t==='turn') clockRestart();
+  save();
+}
+const act=(i,t)=>ev(t,i);
+const frame=(i,d)=>ev(d>0?'frame+':'frame-',i);
+const ball=(i,d)=>ev(d>0?'ball+':'ball-',i);
 function extend(i){
   const p=S.players[i];
-  if(p.extUsed>=S.shot.extN){ toast('Продления в этой партии закончились',true); return; }
-  snap(); p.extUsed++; S.shotExt+=S.shot.ext; if(!S.clock.running){S.clock.start=Date.now();S.clock.running=true} save(); toast('+'+S.shot.ext+' сек');
+  if(S.shot.extN<=0||p.extUsed>=S.shot.extN){ toast('Продления в этой партии закончились',true); return; }
+  ev('ext',i,()=>{ S.shotExt+=S.shot.ext; if(!S.clock.running){S.clock.start=Date.now();S.clock.running=true} });
+  toast('+'+S.shot.ext+' сек');
 }
-function setTurn(i){ if(S.turn===i) return; snap(); S.turn=i; S.series=0; clockRestart(); save(); }
+function setTurn(i){ if(S.turn===i) return; ev('turn',i); }
+function editEv(k,patch){ if(!S.log[k]) return; snap(); Object.assign(S.log[k],patch); replay(S); save(); }
+function delEv(k){ if(!S.log[k]) return; snap(); S.log.splice(k,1); replay(S); save(); }
 
 /* ---- stats ---- */
 const made=q=>q.foreign+q.own+(q.luck||0);
@@ -542,9 +804,9 @@ const STATDEF={
   frames:['Выиграно партий',q=>q.frames,null,1]
 };
 function statList(){return S.cfg.stats.filter(x=>x.on&&STATDEF[x.id]).map(x=>[x.label||STATDEF[x.id][0],...STATDEF[x.id].slice(1)])}
-function frameStats(){
-  return S.players.map((p,i)=>{const b=S.fs.base[i]||{}, q={}; CNT.forEach(k=>q[k]=(p[k]||0)-(b[k]||0));
-    q.best=S.fs.best[i]||0; q.frames=p.frames; q.brk=S.fs.brk?(S.fs.brk.i===i?S.fs.brk.ok:null):null; return q;});
+function frameStats(X=S){
+  return X.players.map((p,i)=>{const b=X.fs.base[i]||{}, q={}; CNT.forEach(k=>q[k]=(p[k]||0)-(b[k]||0));
+    q.best=X.fs.best[i]||0; q.frames=p.frames; q.brk=X.fs.brk?(X.fs.brk.i===i?X.fs.brk.ok:null):null; return q;});
 }
 function matchStats(){ return S.players.map(p=>{const q=Object.assign({},p); q.brk=null; return q}); }
 
@@ -587,6 +849,7 @@ function skeleton(){
   return `<div class="stage">
    <div class="scr" data-s="bug"><div class="bug">
      <div class="sptab" data-k="sptab"></div>
+     <div class="fhtab" data-k="fh"></div>
      <div class="bug-in">
       <div class="bh shine"><span class="lg" data-k="lg"></span><span class="tt" data-k="tt"></span><span class="fn" data-k="fn"></span></div>
       <div class="g" data-k="g">
@@ -607,6 +870,11 @@ function skeleton(){
    </div></div>
    ${card('vs')}${card('frame')}${card('match')}
    <div class="scr" data-s="spons"><div class="spcard" data-k="spC"></div></div>
+   <div class="scr" data-s="bracket"><div class="brc"><div data-k="brHd"></div><div class="brw" data-k="brW"></div></div></div>
+   <div class="scr" data-s="break"><div class="brk"><div class="brk-bg" data-k="pBg"></div><div class="brk-sh"></div><div class="brk-c" data-k="pC"></div><div class="brk-sp" data-k="pSp"></div></div></div>
+   <div class="scr" data-s="winner"><div class="win"><canvas class="spark"></canvas><div class="win-ph" data-k="wPh"></div><div class="win-r" data-k="wR"></div></div></div>
+   <div class="lt" data-k="lt"></div>
+   <div class="ticker" data-k="tkr"><div class="tk-l" data-k="tkL"></div><div class="tk-v"><div class="tk-t" data-k="tkT"></div></div></div>
   </div>`;
 }
 function numHTML(c,key,v){ // число с анимацией, если изменилось
@@ -685,6 +953,108 @@ function ballsHTML(c,i){
   const key='bl'+i, prev=c._prev[key]; c._prev[key]=p.balls;
   return Array.from({length:n},(_,k)=>`<span class="bl${k<p.balls?'':' e'}${prev!==undefined&&k<p.balls&&k>=prev?' new':''}"></span>`).join('');
 }
+/* ---- история партий над плашкой ---- */
+function fhHTML(c){
+  const L=S.frameLog||[], prev=c._prev.fhn; c._prev.fhn=L.length;
+  return L.slice(-7).map((f,k,arr)=>{ const n=L.length-arr.length+k+1, isNew=prev!==undefined&&L.length>prev&&k===arr.length-1;
+    return `<div class="fh${isNew?' new':''}"><small>${n}</small><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }).join('');
+}
+/* ---- перерыв ---- */
+function breakHTML(){
+  const C=S.cfg, [A,B]=S.players;
+  const lg=C.logo?`<img src="${esc(C.logo)}" alt="">`:'';
+  const nm=(p,r)=>`<div class="n">${r?'':(C.flags?flag(p.country):'')}<span class="fitx">${esc(p.name)}</span>${r&&C.flags?flag(p.country):''}</div>`;
+  return `<div class="brk-lg rv" style="--d:.15s">${lg}</div>
+    <div class="brk-t rv" style="--d:.3s">${esc(C.pTitle||'Перерыв')}</div>
+    <div class="brk-s rv" style="--d:.45s" data-pst></div>
+    <div class="brk-n rv" style="--d:.55s" data-pc></div>
+    ${C.pScore?`<div class="brk-sc rv" style="--d:.75s">${nm(A)}<div class="f">${A.frames}</div><div class="f">${B.frames}</div>${nm(B,1)}</div>`:''}`;
+}
+function breakBg(){
+  const C=S.cfg; if(!C.pBg) return '';
+  return C.pBgKind==='video'?`<video src="${esc(C.pBg)}" autoplay muted loop playsinline></video>`:`<img src="${esc(C.pBg)}" alt="">`;
+}
+/* ---- победитель ---- */
+function winnerHTML(){
+  const C=S.cfg, w=winner();
+  if(w<0) return {ph:'',r:`<div class="win-t rv" style="--d:.3s">Матч ещё идёт</div><div class="win-m rv" style="--d:.45s">Экран заполнится после последней партии</div>`};
+  const P=S.players[w], O=S.players[1-w], W=S.win&&S.win.name===P.name?S.win:null;
+  const ph=P.body?`<img class="body" src="${esc(P.body)}" alt="">`:P.photo?`<div class="ava"><img src="${esc(P.photo)}" alt=""></div>`:SILB;
+  const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—', avg=(t,n)=>n?Math.round(t/n/1000)+' сек':'—';
+  const tiles=W?[[`${W.w} из ${W.m}`,'Побед в турнире'],[`${W.fw}:${W.fl}`,'Партии'],[W.made,'Забито шаров'],[W.best,'Лучшая серия'],[pct(W.pot,W.att),'Реализация'],[avg(W.time,W.shots),'Ср. время подготовки']]
+    :[[`${P.frames}:${O.frames}`,'Партии'],[made(P),'Забито шаров'],[P.best,'Лучшая серия'],[pct(P.foreign+P.own,P.attacks),'Реализация'],[P.breaks?`${P.breaksOk}/${P.breaks}`:'—','Начальный удар'],[avg(P.time,P.shots),'Ср. время подготовки']];
+  const r=`<div class="win-cup rv" style="--d:.3s">${esc(S.title)}${S.subtitle?' · '+esc(S.subtitle):''}</div>
+    <div class="win-t rv" style="--d:.45s">${esc(C.winTitle||'Победитель')}</div>
+    <div class="win-n rv" style="--d:.65s">${C.flags?flag(P.country):''}<span class="fitx">${esc(P.name)}</span></div>
+    <div class="win-m rv" style="--d:.8s">Счёт <b>${P.frames}:${O.frames}</b> · соперник: ${esc(O.name)}</div>
+    <div class="win-sub rv" style="--d:.95s">${W?`Статистика за турнир · матчей: ${W.m}`:'Статистика матча'}</div>
+    <div class="win-g">${tiles.map(([v,l],k)=>`<div class="wt rv" style="--d:${(1.05+k*.12).toFixed(2)}s"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</div>`;
+  return {ph,r};
+}
+/* золотые искры: canvas в реальном разрешении (чётко и в 4K) */
+function sparks(c,on){
+  const cv=c.querySelector('canvas.spark'); if(!cv) return;
+  if(!on){ if(c._sp){ cancelAnimationFrame(c._sp.raf); c._sp=null; cv.getContext('2d').clearRect(0,0,cv.width,cv.height); } return; }
+  if(c._sp) return;
+  const st=c.querySelector('.stage'), k=(parseFloat(st.style.zoom)||1)*(window.devicePixelRatio||1);
+  cv.width=Math.round(1920*k); cv.height=Math.round(1080*k);
+  const ctx=cv.getContext('2d'), P=[], G=['#f6e3a1','#e9c766','#c9a14a','#fff4cf','#b8862b'];
+  const burst=(x,y,n)=>{ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, v=2+Math.random()*7;
+    P.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-2,l:1,d:.006+Math.random()*.01,r:1.5+Math.random()*3.5,c:G[i%G.length],s:Math.random()<.35}); } };
+  let t=0; const sp=c._sp={raf:0};
+  const loop=()=>{
+    t++; if(t%45===1) burst(900+Math.random()*900,120+Math.random()*420,70);
+    if(t%3===0) P.push({x:Math.random()*1920,y:-10,vx:(Math.random()-.5)*1.2,vy:1.5+Math.random()*2,l:1,d:.003,r:2+Math.random()*3,c:G[t%G.length],s:true,rot:Math.random()*6});
+    ctx.setTransform(k,0,0,k,0,0); ctx.clearRect(0,0,1920,1080);
+    for(let i=P.length-1;i>=0;i--){ const q=P[i]; q.x+=q.vx; q.y+=q.vy; q.vy+=.06; q.vx*=.99; q.l-=q.d;
+      if(q.l<=0||q.y>1100){P.splice(i,1);continue}
+      ctx.globalAlpha=Math.max(0,q.l); ctx.fillStyle=q.c;
+      if(q.s){ q.rot=(q.rot||0)+.1; ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(q.rot); ctx.fillRect(-q.r,-q.r*.4,q.r*2,q.r*.8); ctx.restore(); }
+      else { ctx.beginPath(); ctx.arc(q.x,q.y,q.r,0,7); ctx.fill(); ctx.globalAlpha=q.l*.25; ctx.beginPath(); ctx.arc(q.x,q.y,q.r*3,0,7); ctx.fill(); }
+    }
+    ctx.globalAlpha=1; sp.raf=requestAnimationFrame(loop);
+  };
+  loop();
+}
+/* ---- турнирная сетка ---- */
+let BR=null, brT=0;
+const normN=s=>String(s||'').toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ').trim();
+function loadBracket(){
+  brT=Date.now();
+  return fetch('/api/bracket',{cache:'no-store'}).then(r=>r.json()).then(j=>{ BR=j; if(S) renderAll(); fillBrPick(); }).catch(()=>{});
+}
+function bracketHTML(){
+  if(!BR||!BR.rounds||!BR.rounds.length) return '<div class="brempty">Сетка не загружена — загрузите Excel на главной странице во вкладке «Сетка»</div>';
+  const R=BR.rounds.slice(Math.min(S.cfg.brFrom||0,BR.rounds.length-1));
+  const W=1840, top=56, areaH=924-top-18, colW=(W-40)/R.length, bw=Math.min(380,colW-56);
+  const n0=Math.max(1,R[0].matches.length), bh=Math.max(44,Math.min(100,areaH/n0*.78)), bf=Math.max(14,Math.min(26,bh*.34));
+  const live=[normN(S.players[0].name),normN(S.players[1].name)];
+  const pos=R.map((r,j)=>{ const sl=areaH/Math.max(1,r.matches.length); return r.matches.map((m,k)=>({x:20+j*colW+(colW-bw)/2,y:top+sl*(k+.5)})); });
+  let lines='', html=R.map((r,j)=>`<div class="rnd" style="left:${(20+j*colW).toFixed(1)}px;width:${colW.toFixed(1)}px">${esc(r.name||'Раунд '+(j+1))}</div>`).join('');
+  R.forEach((r,j)=>r.matches.forEach((m,k)=>{
+    const p=pos[j][k], nx=pos[j+1]&&pos[j+1][k>>1];
+    if(nx){ const x1=p.x+bw, mx=(x1+nx.x)/2; lines+=`<path d="M${x1} ${p.y}H${mx}V${nx.y}H${nx.x}"/>`; }
+    const done=m.sa!=null&&m.sb!=null, wa=done&&m.sa>m.sb, wb=done&&m.sb>m.sa;
+    const isLive=!done&&m.a&&m.b&&((normN(m.a)===live[0]&&normN(m.b)===live[1])||(normN(m.a)===live[1]&&normN(m.b)===live[0]));
+    let sa=m.sa??'', sb=m.sb??'';
+    if(isLive){ const sw=normN(m.a)===live[0]; sa=S.players[sw?0:1].frames; sb=S.players[sw?1:0].frames; }
+    const row=(n,sc,w,l)=>`<div class="${w?'w':l?'l':''}"><span>${esc(n||'—')}</span><b>${esc(sc)}</b></div>`;
+    const info=[m.table,m.time].filter(Boolean).join(' · ');
+    html+=`<div class="bm${isLive?' live':''}" style="left:${p.x.toFixed(1)}px;top:${(p.y-bh/2).toFixed(1)}px;width:${bw.toFixed(1)}px;height:${bh.toFixed(1)}px;--bf:${bf.toFixed(1)}px;--d:${(.4+j*.25+k*.03).toFixed(2)}s">
+      ${info&&bh>=50?`<span class="tm">${esc(info)}</span>`:''}${isLive?'<span class="lv">LIVE</span>':''}${row(m.a,sa,wa,wb)}${row(m.b,sb,wb,wa)}</div>`;
+  }));
+  return `<svg viewBox="0 0 1840 924" preserveAspectRatio="none">${lines}</svg>${html}`;
+}
+/* ---- бегущая строка ---- */
+function updTicker(c,on){
+  const C=S.cfg, items=String(C.tk||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  const one=items.map(t=>`<span>${esc(t)}</span><i>◆</i>`).join('');
+  setK(c,'tkL',esc(C.tkLabel||''));
+  const el=setK(c,'tkT',one+one);
+  c.querySelector('[data-k="tkr"]').classList.toggle('on',on&&items.length>0);
+  const sig=one+'|'+C.tkSpeed;
+  if(el&&c._tk!==sig){ c._tk=sig; requestAnimationFrame(()=>{ const half=el.scrollWidth/2||1; el.style.setProperty('--dur',(half/Math.max(20,C.tkSpeed||110)).toFixed(1)+'s'); }); }
+}
 function updateStage(c,first){
   if(!c.querySelector('.stage')){ c.innerHTML=skeleton(); c._prev={}; first=true; }
   const st=c.querySelector('.stage'); fit(c);
@@ -712,7 +1082,21 @@ function updateStage(c,first){
   for(const s of ['vs','frame','match']){ setK(c,s+'FA',fullHTML(A,'a')); setK(c,s+'FB',fullHTML(B,'b')); }
   setK(c,'vsC',vsCard()); setK(c,'frameC',statCard('frame')); setK(c,'matchC',statCard('match'));
   const spc=setK(c,'spC',sponsCard()); spc.classList.toggle('big',sp.length<=2);
+  // новые экраны
+  const fh=setK(c,'fh',C.fhist?fhHTML(c):''); fh.classList.toggle('has',!!(C.fhist&&S.frameLog.length));
+  setK(c,'pBg',breakBg()); setK(c,'pC',breakHTML());
+  setK(c,'pSp',C.pSpons?sp.map((u,i)=>`<div class="sptile" data-spt="${i}" style="--d:${(1+i*.15).toFixed(2)}s"><img src="${esc(u)}" alt=""></div>`).join(''):'');
+  const wn=winnerHTML(); setK(c,'wPh',wn.ph); setK(c,'wR',wn.r);
+  const lg=C.logo?`<img src="${esc(C.logo)}" alt="">`:'';
+  setK(c,'brHd',`<div class="hd shine"><span class="lg">${lg}</span><span class="tt">${esc((BR&&BR.title)||S.title)}</span><span class="lg">${lg}</span></div>`);
+  setK(c,'brW',bracketHTML());
+  setK(c,'lt',S.lt?`<div class="lt-bar"></div><div class="lt-b"><div class="lt-n">${esc(S.lt.name)}</div>${S.lt.role?`<div class="lt-r">${esc(S.lt.role)}</div>`:''}</div>`:'');
   const scr=S.screen==='spons'&&!sp.length?'hidden':S.screen;
+  const tkOn=!!(C.tkOn&&['bug','break','bracket'].includes(scr));
+  st.classList.toggle('tk',tkOn); updTicker(c,tkOn);
+  if(scr==='bracket'&&Date.now()-brT>15000) loadBracket();
+  sparks(c,scr==='winner'&&winner()>=0);
+  c._scr=scr;
   const apply=()=>c.querySelectorAll('.scr').forEach(e=>e.classList.toggle('on',e.dataset.s===scr));
   if(first) requestAnimationFrame(()=>requestAnimationFrame(apply)); else apply();
   fitText(c);
@@ -737,6 +1121,7 @@ function fit(container){
   const st=container.querySelector('.stage'); if(!st) return;
   // zoom, а не transform: браузер заново раскладывает и рисует всё в реальном разрешении
   // (3840×2160 в OBS = чёткий 4K), без растягивания картинки 1920×1080
+  if(!container.clientWidth||!container.clientHeight) return; // контейнер скрыт (компактный режим)
   const k=Math.min(container.clientWidth/1920,container.clientHeight/1080);
   st.style.zoom=k;
 }
@@ -784,6 +1169,9 @@ function syncFields(force){
   set('fTitle',S.title); set('fSub',S.subtitle); set('fRace',S.raceTo); set('fBallsTo',S.ballsTo);
   set('fShotMode',S.shot.mode); set('fLimit',S.shot.limit); set('fExt',S.shot.ext); set('fExtN',S.shot.extN); set('fSpInt',S.cfg.spInt);
   set('fNameA',S.players[0].name); set('fNameB',S.players[1].name);
+  set('fPDur',Math.round(S.pdur/6000)/10); set('fPTitle',S.cfg.pTitle); set('fPSub',S.cfg.pSub); set('fPEnd',S.cfg.pEnd);
+  set('fTkLabel',S.cfg.tkLabel); set('fTkSpeed',S.cfg.tkSpeed); set('fTk',S.cfg.tk); set('fLtDur',S.cfg.ltDur); set('fWinTitle',S.cfg.winTitle);
+  const pb=$('thPBg'); if(pb){ pb.style.backgroundImage=S.cfg.pBg&&S.cfg.pBgKind!=='video'?`url('${S.cfg.pBg}')`:''; pb.textContent=S.cfg.pBgKind==='video'?'🎬':''; pb.style.display='grid'; pb.style.placeItems='center'; }
   set('fCtA',S.players[0].country); set('fCtB',S.players[1].country);
   const bg=(id,u)=>$(id).style.backgroundImage=u?`url('${u}')`:'';
   bg('thA',S.players[0].photo); bg('thB',S.players[1].photo); bg('bdA',S.players[0].body); bg('bdB',S.players[1].body);
@@ -801,6 +1189,9 @@ function renderAll(external){
   $('cLbl').textContent=S.shot.mode==='up'?'Подготовка, сек':'На удар, сек';
   syncFields(external);
   renderCfg(external);
+  renderPeople(external);
+  renderLog();
+  renderCompact();
   if(external&&PLAYERS.length) fillPickers();
 }
 function setupLinks(){
@@ -857,11 +1248,17 @@ function tick(only){
       e.querySelector('b').textContent=sh.txt;
     });
     r.querySelectorAll('[data-spi]').forEach(e=>e.classList.toggle('cur',+e.dataset.spi===spI));
+    const pl=pLeft();
+    r.querySelectorAll('[data-pc]').forEach(e=>e.textContent=pl>0?fmt(pl+999):'');
+    r.querySelectorAll('[data-pst]').forEach(e=>e.textContent=pl>0?(S.cfg.pSub||''):(S.cfg.pEnd||''));
+    const ltE=r.querySelector('[data-k="lt"]'); if(ltE) ltE.classList.toggle('on',!!(S.lt&&Date.now()-S.lt.shown<S.lt.dur&&['bug','hidden','vs','frame','match'].includes(r._scr)));
     r.querySelectorAll('[data-spt]').forEach(e=>e.classList.toggle('cur',spN>1&&+e.dataset.spt===spI));
   }
   if(!isOverlay()){
     const c=$('cClock'); if(c){ c.textContent=sh.txt; c.className='c'+(paused?' paused':'')+(!sh.up&&sh.secs<=10?' crit':(!sh.up&&sh.frac<=.5?' warn':'')); }
     const m=$('mClock'); if(m){ m.textContent=mt; m.classList.toggle('paused',!S.mclock.running); }
+    const pc=$('pClock'); if(pc) pc.textContent=fmt(pLeft()+999);
+    if(document.body.classList.contains('compact')){ const cc=$('cClk'); cc.className='c-clk'+(paused?' paused':'')+(!sh.up&&sh.secs<=10?' crit':(!sh.up&&sh.frac<=.5?' warn':'')); $('cClk2').textContent=sh.txt; $('cMcl').textContent=mt; }
     alertShot(sh);
   }
 }
@@ -881,16 +1278,23 @@ document.addEventListener('click',e=>{
   else if(b.dataset.copy){const el=$(b.dataset.copy);el.select();
     const done=()=>{b.textContent='Скопировано ✓';setTimeout(()=>b.textContent='Копировать',1500)};
     try{navigator.clipboard.writeText(el.value).then(done,()=>{document.execCommand('copy');done()})}catch(e){try{document.execCommand('copy')}catch(_){};done()}}
-  else if(b.closest('#scrSeg')){ if(b.dataset.v==='spons'&&!(S.cfg.sponsors||[]).length){ toast('Сначала добавьте логотипы спонсоров',true); return; } S.screen=b.dataset.v;save();}
+  else if(b.closest('#scrSeg')) setScreen(b.dataset.v);
+  else if(b.dataset.lgd!=null) delEv(+b.dataset.lgd);
+  else if(b.dataset.lts!=null){ const x=S.cfg.people[+b.dataset.lts]; if(!x||!x.name.trim()){toast('Впишите имя',true);return} S.lt={id:Date.now(),name:x.name,role:x.role,dur:Math.max(2,S.cfg.ltDur||6)*1000,shown:Date.now()}; save(); toast('Титр показан'); }
+  else if(b.dataset.ltr!=null){ snap(); S.cfg.people.splice(+b.dataset.ltr,1); save(); renderPeople(true); }
+  else if(b.dataset.ca){ act(S.turn,b.dataset.ca); try{navigator.vibrate&&navigator.vibrate(25)}catch(_){} }
   else if(b.closest('#bgSeg')){S.bg=b.dataset.v;save();}
 });
 $('undoBtn').onclick=undo;
 document.addEventListener('change',e=>{const t=e.target;
+  if(t.dataset.lgp!=null){ editEv(+t.dataset.lgp,{i:+t.value}); return; }
+  if(t.dataset.lgt!=null){ editEv(+t.dataset.lgt,{t:t.value}); return; }
   if(t.dataset.si!=null){ S.cfg.stats[+t.dataset.si].on=t.checked; save(); renderCfg(true); }
   else if(t.dataset.cfg){ S.cfg[t.dataset.cfg]=t.checked; save(); }
   else if(t.dataset.ph!=null){ uploadImg(t.files[0],t.dataset.kind==='body'?2200:1000,url=>{ snap(); S.players[+t.dataset.ph][t.dataset.kind]=url; save(); }); t.value=''; }
 });
 document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.pn!=null||t.dataset.pr!=null){ const x=S.cfg.people[+(t.dataset.pn??t.dataset.pr)]; if(x){ x[t.dataset.pn!=null?'name':'role']=t.value; save(); } return; }
   if(t.dataset.sl!=null){ const x=S.cfg.stats[+t.dataset.sl]; const v=t.value.trim(); x.label=(v===STATDEF[x.id][0])?'':v; save(); }
   else if(t.dataset.col){ S.cfg[t.dataset.col]=t.value; save(); }
 });
@@ -949,10 +1353,10 @@ function uploadImg(file,max,done){
 $('fLogo').onchange=e=>{ uploadImg(e.target.files[0],1200,url=>{ snap(); S.cfg.logo=url; save(); renderCfg(true); }); e.target.value=''; };
 $('clrLogo').onclick=()=>{ snap(); S.cfg.logo=''; save(); renderCfg(true); };
 $('fSpons').onchange=e=>{ [...e.target.files].forEach(f=>uploadImg(f,1200,url=>{ S.cfg.sponsors=(S.cfg.sponsors||[]).concat(url); save(); renderCfg(true); })); e.target.value=''; };
-$('newFrameStats').onclick=()=>{snap();S.players.forEach(p=>{const n=blankP(p.name);Object.assign(p,n,{name:p.name,photo:p.photo,body:p.body,country:p.country,info:p.info,playerId:p.playerId,frames:p.frames,balls:p.balls})});S.series=0;S.fs=newFs(S.players,mel());S.lastFrame=null;clockRestart();save()};
+$('newFrameStats').onclick=()=>ev('reset',0);
 function freshMatch(){
   S.players.forEach(p=>Object.assign(p,blankP(p.name),{name:p.name,photo:p.photo,body:p.body,country:p.country,info:p.info,playerId:p.playerId}));
-  S.turn=0;S.series=0;S.lastFrame=null;S.mclock={running:false,start:Date.now(),acc:0};S.fs=newFs(S.players,0);clockRestart();
+  S.mclock={running:false,start:Date.now(),acc:0}; S.log=[]; S.base0=zeroBase(); S.win=null; S.winShown=false; replay(S); clockRestart();
 }
 let armed=false;
 $('resetAll').onclick=e=>{
@@ -977,10 +1381,114 @@ $('saveMatch').onclick=()=>{
     .catch(()=>toast('Не удалось сохранить матч',true));
 };
 
+/* ---- экраны ---- */
+function setScreen(v){
+  if(v==='spons'&&!(S.cfg.sponsors||[]).length){ toast('Сначала добавьте логотипы спонсоров',true); return; }
+  if(v==='break'&&!S.pclock.running&&pLeft()>0&&S.pclock.acc===0) S.pclock={running:true,start:Date.now(),acc:0};
+  if(v==='bracket') loadBracket();
+  S.screen=v; save();
+  if(v==='winner') computeWin();
+}
+/* ---- перерыв ---- */
+$('pStart').onclick=()=>{ if(pLeft()<=0) S.pclock={running:false,start:Date.now(),acc:0}; if(!S.pclock.running) S.pclock={running:true,start:Date.now()-S.pclock.acc,acc:0}; save(); };
+$('pStop').onclick=()=>{ if(S.pclock.running) S.pclock={running:false,start:Date.now(),acc:pel()}; save(); };
+$('pReset').onclick=()=>{ S.pclock={running:false,start:Date.now(),acc:0}; save(); };
+$('pShow').onclick=()=>setScreen('break');
+bind('fPDur',v=>{ S.pdur=Math.max(1,Math.min(180,parseFloat(v)||5))*60000; });
+bind('fPTitle',v=>S.cfg.pTitle=v); bind('fPSub',v=>S.cfg.pSub=v); bind('fPEnd',v=>S.cfg.pEnd=v);
+$('fPBg').onchange=e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  if(f.size>40*1024*1024){ toast('Файл больше 40 МБ',true); return; }
+  toast('Загружаю фон…');
+  fetch('/api/media',{method:'POST',headers:{'Content-Type':f.type},body:f}).then(r=>r.json()).then(j=>{
+    if(!j.url) throw j; snap(); S.cfg.pBg=j.url; S.cfg.pBgKind=j.kind; save(); renderCfg(true); toast('Фон загружен');
+  }).catch(j=>toast((j&&j.error)||'Не удалось загрузить фон',true));
+};
+$('clrPBg').onclick=()=>{ snap(); S.cfg.pBg=''; S.cfg.pBgKind=''; save(); renderCfg(true); };
+/* ---- бегущая строка ---- */
+bind('fTkLabel',v=>S.cfg.tkLabel=v); bind('fTkSpeed',v=>S.cfg.tkSpeed=Math.max(20,Math.min(400,parseInt(v)||110))); bind('fTk',v=>S.cfg.tk=v);
+/* ---- титры ---- */
+function renderPeople(force){
+  const box=$('pplList'); if(!box) return;
+  if(!force&&box.contains(document.activeElement)) return;
+  box.innerHTML=(S.cfg.people||[]).map((x,i)=>`<div class="pr"><input data-pn="${i}" value="${esc(x.name)}" placeholder="Имя Фамилия"><input data-pr="${i}" value="${esc(x.role)}" placeholder="Комментатор / судья"><button class="btn2" data-lts="${i}">Показать</button><button class="btn2 s" data-ltr="${i}">✕</button></div>`).join('')||'<span class="hint" style="margin:0">Добавьте комментатора или судью — потом титр показывается одной кнопкой</span>';
+}
+$('pplAdd').onclick=()=>{ snap(); S.cfg.people=(S.cfg.people||[]).concat({name:'',role:'Комментатор'}); save(); renderPeople(true); };
+$('ltHide').onclick=()=>{ S.lt=null; save(); };
+bind('fLtDur',v=>S.cfg.ltDur=Math.max(2,Math.min(60,parseInt(v)||6)));
+bind('fWinTitle',v=>S.cfg.winTitle=v);
+/* ---- статистика победителя за турнир ---- */
+async function computeWin(){
+  const w=winner(); if(w<0) return;
+  const P=S.players[w], O=S.players[1-w], T=normN(S.title);
+  let list=[]; try{ const r=await fetch('/api/matches'); if(r.ok) list=await r.json(); }catch(_){}
+  const g={name:P.name,m:0,w:0,fw:0,fl:0,made:0,best:0,att:0,pot:0,time:0,shots:0};
+  const add=(me,op,won)=>{ g.m++; if(won) g.w++; g.fw+=me.frames||0; g.fl+=op.frames||0; g.made+=(me.foreign||0)+(me.own||0)+(me.luck||0);
+    g.best=Math.max(g.best,me.best||0); g.att+=me.attacks||0; g.pot+=(me.foreign||0)+(me.own||0); g.time+=me.time||0; g.shots+=me.shots||0; };
+  for(const m of list){ if(normN(m.title)!==T) continue;
+    const k=m.players.findIndex(x=>(P.playerId&&x.playerId===P.playerId)||normN(x.name)===normN(P.name)); if(k<0) continue;
+    add(m.players[k],m.players[1-k],m.winner===k); }
+  add(P,O,true);
+  if(winner()!==w) return;
+  S.win=g; save();
+}
+/* ---- выбор матча из сетки ---- */
+function fillBrPick(){
+  const el=$('pickBr'); if(!el||isOverlay()) return;
+  if(!BR||!BR.rounds||!BR.rounds.length){ el.innerHTML='<option value="">— сетка не загружена (главная → «Сетка») —</option>'; return; }
+  el.innerHTML='<option value="">— выбрать матч из сетки —</option>'+BR.rounds.map((r,ri)=>r.matches.map((m,k)=>m.a&&m.b?`<option value="${ri}:${k}">${esc(r.name||'Раунд '+(ri+1))}: ${esc(m.a)} — ${esc(m.b)}${m.sa!=null&&m.sb!=null?` (${m.sa}:${m.sb})`:''}${m.table?' · '+esc(m.table):''}</option>`:'').join('')).join('');
+}
+$('pickBr').onchange=e=>{
+  const [ri,k]=e.target.value.split(':').map(Number); const r=BR&&BR.rounds[ri], m=r&&r.matches[k]; if(!m) return;
+  snap();
+  [m.a,m.b].forEach((n,i)=>{ const p=S.players[i], pl=PLAYERS.find(x=>normN(x.name)===normN(n));
+    p.name=n; p.playerId=pl?pl.id:null; p.photo=pl&&pl.photoId?'/photos/'+pl.photoId+'.jpg':''; p.body=pl&&pl.bodyId?'/photos/'+pl.bodyId+'.jpg':'';
+    p.country=(pl&&pl.country)||p.country||'ru'; p.info={}; if(pl) INFO.forEach(([q])=>{ if(pl[q]) p.info[q]=pl[q] }); });
+  if(r.name) S.subtitle=r.name;
+  save(); fillPickers(); toast('Игроки подставлены из сетки');
+};
+/* ---- журнал ударов ---- */
+function renderLog(){
+  const box=$('logList'); if(!box||!$('logBox').open) return;
+  if(box.contains(document.activeElement)&&document.activeElement.tagName==='SELECT') return;
+  const X=clone(S), fr=[]; replay(X,(e,k,Y)=>fr[k]=Y.players[0].frames+Y.players[1].frames+1);
+  const nm=S.players.map(p=>esc(short(p.name)));
+  const rows=S.log.map((e,k)=>`<div class="lg-r${e.t==='frame+'?' fe':''}"><span class="no">#${k+1}</span><span class="fr2">П${fr[k]}</span><span class="tm2">${fmtH(e.mt||0)}</span>
+    <select data-lgp="${k}">${nm.map((n,i)=>`<option value="${i}" ${i===e.i?'selected':''}>${n}</option>`).join('')}</select>
+    ${SHOTS.includes(e.t)?`<select data-lgt="${k}">${SHOTS.map(t=>`<option value="${t}" ${t===e.t?'selected':''}>${EVN[t]}</option>`).join('')}</select>`:`<span class="tx">${EVN[e.t]||e.t}</span>`}
+    <button data-lgd="${k}" title="Удалить">✕</button></div>`).reverse().join('');
+  box.innerHTML=rows||'<div class="hint" style="padding:10px;margin:0">Пока нет ни одного удара</div>';
+}
+$('logBox').addEventListener('toggle',renderLog);
+/* ---- компактный режим ---- */
+const CMP_KEY='tablo.compact';
+const SCR_LIST=[['bug','Счёт'],['vs','VS'],['frame','Партия'],['match','Встреча'],['bracket','Сетка'],['break','Перерыв'],['winner','Победитель'],['spons','Спонсоры'],['hidden','Скрыть']];
+function setCompact(on){ document.body.classList.toggle('compact',on); try{localStorage.setItem(CMP_KEY,on?'1':'0')}catch(_){} if(S) renderAll(); else fit($('pv')); }
+$('toCompact').onclick=()=>setCompact(true); $('toFull').onclick=()=>setCompact(false);
+$('cScr').innerHTML=SCR_LIST.map(([v,n])=>`<option value="${v}">Экран: ${n}</option>`).join('');
+$('cScr').onchange=e=>setScreen(e.target.value);
+$('cSwap').onclick=()=>setTurn(1-S.turn);
+$('cUndo').onclick=undo;
+$('cPause').onclick=()=>togglePause();
+$('cExt').onclick=()=>extend(S.turn);
+let cfArm=false;
+$('cFrame').onclick=e=>{ const b=e.currentTarget; if(!cfArm){ cfArm=true; b.textContent='Точно?'; setTimeout(()=>{cfArm=false;b.textContent='+ Партия'},2000); return; } cfArm=false; b.textContent='+ Партия'; frame(S.turn,1); };
+function renderCompact(){
+  if(!document.body.classList.contains('compact')) return;
+  const cp=(i)=>{ const p=S.players[i]; const el=$(i?'cpB':'cpA'); el.classList.toggle('on',S.turn===i);
+    el.innerHTML=`<div class="n">${esc(p.name)}</div><div class="f">${p.frames}<small>${p.balls} ш.</small></div>`; };
+  cp(0); cp(1);
+  const t=S.players[S.turn]; $('cWho').innerHTML=`▶ ${esc(t.name)}${S.series>1?` · серия ${S.series}`:''}`;
+  const left=S.shot.extN-t.extUsed; const ce=$('cExt'); ce.textContent=`+${S.shot.ext} (${Math.max(0,left)})`; ce.disabled=S.shot.mode!=='down'||left<=0;
+  $('cPause').textContent=S.clock.running?'⏸ Таймер':'▶ Таймер';
+  $('cScr').value=S.screen;
+}
 S=norm({});
 function route(){document.body.classList.toggle('overlay',isOverlay());renderAll(true)}
 window.addEventListener('resize',()=>{fit(isOverlay()?$('ovWrap'):$('pv'))});
-if(!isOverlay()){ setupLinks(); loadPlayers(); }
+if(!isOverlay()){ setupLinks(); loadPlayers(); loadBracket();
+  let cm=null; try{ cm=localStorage.getItem(CMP_KEY) }catch(_){}
+  if(cm==='1'||(cm===null&&window.innerWidth<700)) document.body.classList.add('compact'); }
 route();
 startSync();
 </script>
