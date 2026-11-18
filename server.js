@@ -121,7 +121,7 @@ function readBody(req) {
     req.on('error', no);
   });
 }
-const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
+const MIME = { '.webp': 'image/webp', '.jpg': 'image/jpeg', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 function serveFile(res, rel, cache) {
   const f = path.normalize(path.join(PUB, rel));
   if (!f.startsWith(PUB)) return send(res, 404, 'Not found', 'text/plain');
@@ -135,9 +135,12 @@ const clean = (s, n = 80) => String(s == null ? '' : s).replace(/[\u0000-\u001f]
 function savePhoto(dataUrl) {
   const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
   if (!m) return null;
-  if (m[2].length > 3 * 1024 * 1024) return null;
+  if (m[2].length > 6 * 1024 * 1024) return null;
   const id = uid(10); set('photo:' + id, { t: m[1], b: m[2] }); return id;
 }
+
+const INFO_KEYS = ['country', 'city', 'age', 'height', 'rank', 'club', 'cue'];
+function setInfo(pl, b) { for (const k of INFO_KEYS) if (b[k] != null) pl[k] = clean(b[k], 60); }
 
 /* login rate limit */
 const tries = new Map();
@@ -155,7 +158,7 @@ function liveOf(id) {
   return live.get(id);
 }
 function elNow(L) { return L.state && L.state.clock && L.state.clock.running ? L.el + (Date.now() - L.at) : L.el; }
-function snapshot(id) { const L = liveOf(id); return { type: 'state', rev: L.rev, state: L.state, el: elNow(L), serverTime: Date.now() }; }
+function snapshot(id) { const L = liveOf(id); return { type: 'state', rev: L.rev, state: L.state, el: elNow(L), age: Date.now() - L.at, serverTime: Date.now() }; }
 function putState(id, state, el, from) {
   const L = liveOf(id);
   L.state = state; L.rev++; L.el = +el || 0; L.at = Date.now();
@@ -166,7 +169,7 @@ function putState(id, state, el, from) {
 }
 
 /* ===================== matches ===================== */
-const STAT_KEYS = ['frames', 'balls', 'foreign', 'own', 'best', 'attacks', 'safeties', 'fouls', 'time', 'shots'];
+const STAT_KEYS = ['frames', 'balls', 'foreign', 'own', 'luck', 'best', 'attacks', 'safeties', 'fouls', 'time', 'shots', 'breaks', 'breaksOk'];
 function matchFrom(tableId, st) {
   const t = tableById(tableId) || { name: '' };
   const players = (st.players || []).slice(0, 2).map(p => {
@@ -230,7 +233,8 @@ async function api(req, res, url) {
   if (p === '/api/players' && m === 'GET') return json(res, get('players', []));
   if (p === '/api/players' && m === 'POST') {
     const b = await readBody(req); const list = get('players', []);
-    const pl = { id: uid(6), name: clean(b.name) || 'Игрок', photoId: b.photo ? savePhoto(b.photo) : null, note: clean(b.note, 120) };
+    const pl = { id: uid(6), name: clean(b.name) || 'Игрок', photoId: b.photo ? savePhoto(b.photo) : null, bodyId: b.body ? savePhoto(b.body) : null, note: clean(b.note, 120) };
+    setInfo(pl, b);
     list.push(pl); list.sort((a, b2) => a.name.localeCompare(b2.name, 'ru')); set('players', list); return json(res, pl);
   }
   if ((mm = /^\/api\/players\/([\w-]+)$/.exec(p))) {
@@ -242,6 +246,9 @@ async function api(req, res, url) {
       if (b.note != null) list[i].note = clean(b.note, 120);
       if (b.photo) { const old = list[i].photoId; const id = savePhoto(b.photo); if (id) { list[i].photoId = id; if (old) del('photo:' + old); } }
       if (b.photo === '') list[i].photoId = null;
+      if (b.body) { const old = list[i].bodyId; const id = savePhoto(b.body); if (id) { list[i].bodyId = id; if (old) del('photo:' + old); } }
+      if (b.body === '') list[i].bodyId = null;
+      setInfo(list[i], b);
       list.sort((a, b2) => a.name.localeCompare(b2.name, 'ru')); set('players', list); return json(res, list.find(x => x.id === mm[1]));
     }
     if (m === 'DELETE') { list.splice(i, 1); set('players', list); return json(res, { ok: true }); }
@@ -265,11 +272,11 @@ async function api(req, res, url) {
   }
   if (p === '/api/matches.csv') {
     const rows = [['Дата', 'Стол', 'Турнир', 'Стадия', 'Игрок 1', 'Партии 1', 'Игрок 2', 'Партии 2', 'Победитель',
-      'Забито 1', 'Чужих 1', 'Своих 1', 'Серия 1', 'Атаки 1', 'Отыгрыши 1', 'Фолы 1',
-      'Забито 2', 'Чужих 2', 'Своих 2', 'Серия 2', 'Атаки 2', 'Отыгрыши 2', 'Фолы 2']];
+      'Забито 1', 'Чужих 1', 'Своих 1', 'Случайных 1', 'Серия 1', 'Атаки 1', 'Отыгрыши 1', 'Фолы 1', 'Разбой 1',
+      'Забито 2', 'Чужих 2', 'Своих 2', 'Случайных 2', 'Серия 2', 'Атаки 2', 'Отыгрыши 2', 'Фолы 2', 'Разбой 2']];
     for (const x of get('matches', [])) {
       const [a, b] = x.players; const d = new Date(x.at);
-      const st = q => [q.foreign + q.own, q.foreign, q.own, q.best, q.attacks, q.safeties, q.fouls];
+      const st = q => [q.foreign + q.own + (q.luck || 0), q.foreign, q.own, q.luck || 0, q.best, q.attacks, q.safeties, q.fouls, (q.breaksOk || 0) + '/' + (q.breaks || 0)];
       rows.push([d.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), x.tableName, x.title, x.subtitle, a.name, a.frames, b.name, b.frames, x.winner >= 0 ? x.players[x.winner].name : '', ...st(a), ...st(b)]);
     }
     const csv = '﻿' + rows.map(r => r.map(csvEscape).join(';')).join('\r\n');
