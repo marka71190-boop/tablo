@@ -148,7 +148,7 @@ function confirmBtn(btn,fn,txt='Точно?'){
   const old=btn.textContent; btn._arm=true; btn.textContent=txt;
   setTimeout(()=>{ btn._arm=false; btn.textContent=old; },2500);
 }
-function resizePhoto(file,max=800){
+function resizePhoto(file,max=1000){
   return new Promise((ok,no)=>{
     if(!file) return ok(null);
     const alpha=/png|webp|gif/.test(file.type);
@@ -156,7 +156,8 @@ function resizePhoto(file,max=800){
     r.onload=()=>{const img=new Image();img.onload=()=>{
       const k=Math.min(1,max/Math.max(img.width,img.height)), c=document.createElement('canvas');
       c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height); ok(alpha?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.85));
+      const cx=c.getContext('2d'); cx.imageSmoothingQuality='high'; cx.drawImage(img,0,0,c.width,c.height);
+      if(alpha){ const w=c.toDataURL('image/webp',.92); ok(w.startsWith('data:image/webp')?w:c.toDataURL('image/png')); } else ok(c.toDataURL('image/jpeg',.92));
     };img.onerror=no;img.src=r.result};
     r.onerror=no; r.readAsDataURL(file);
   });
@@ -174,8 +175,8 @@ function formHTML(p){ p=p||{};
 async function formData(root){
   const g=n=>root.querySelector(`[name="${n}"]`), o={name:g('name').value,country:g('country').value};
   INFO.forEach(([k])=>o[k]=g(k).value);
-  const ph=await resizePhoto(g('photo').files[0],800); if(ph) o.photo=ph;
-  const bd=await resizePhoto(g('body').files[0],1200); if(bd) o.body=bd;
+  const ph=await resizePhoto(g('photo').files[0],1000); if(ph) o.photo=ph;
+  const bd=await resizePhoto(g('body').files[0],2200); if(bd) o.body=bd;
   return o;
 }
 const initials=n=>String(n||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
