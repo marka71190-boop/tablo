@@ -5,7 +5,9 @@
  *   PORT            порт (по умолчанию 8080)
  *   ADMIN_PASSWORD  пароль оператора (обязательно задайте!)
  *   SESSION_SECRET  секрет для подписи входа (необязательно)
- *   DATABASE_URL    postgres://user:pass@host:5432/db — постоянное хранение (рекомендуется)
+ *   DATABASE_URL    postgresql://user:pass@host:5432/db?sslmode=require — постоянное хранение (рекомендуется)
+ *   DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSLMODE — то же самое отдельными переменными
+ *   DATABASE_CA     содержимое root.crt (необязательно, для проверки сертификата базы)
  *   DATA_DIR        папка для файлового хранения, если базы нет (по умолчанию ./data)
  */
 const http = require('http');
@@ -24,10 +26,34 @@ const MAX_BODY = 8 * 1024 * 1024;
 /* ===================== storage ===================== */
 const store = { kind: 'file', ready: null };
 let mem = {};
-if (process.env.DATABASE_URL) {
+function dbConfig() {
+  const env = process.env;
+  let cfg, sslmode;
+  if (env.DATABASE_URL) {
+    // sslmode / sslrootcert из строки убираем: pg иначе перекрывает ими наши настройки SSL
+    const u = new URL(env.DATABASE_URL.trim());
+    sslmode = u.searchParams.get('sslmode') || (u.searchParams.get('ssl') === 'true' ? 'require' : null);
+    for (const k of ['sslmode', 'ssl', 'sslrootcert', 'sslcert', 'sslkey', 'uselibpqcompat']) u.searchParams.delete(k);
+    cfg = { connectionString: u.toString() };
+  } else if (env.DB_HOST) {
+    // отдельные переменные — удобно, если в пароле есть символы вроде @ # / ?
+    cfg = { host: env.DB_HOST, port: +env.DB_PORT || 5432, user: env.DB_USER, password: env.DB_PASSWORD, database: env.DB_NAME || 'default_db' };
+    sslmode = env.DB_SSLMODE || null;
+  } else return null;
+  if (env.DB_SSLMODE) sslmode = env.DB_SSLMODE;
+  if (sslmode && sslmode !== 'disable') {
+    // Корневой сертификат Timeweb: содержимое root.crt в DATABASE_CA или путь к файлу в PGSSLROOTCERT
+    let ca = env.DATABASE_CA ? env.DATABASE_CA.replace(/\\n/g, '\n') : null;
+    if (!ca && env.PGSSLROOTCERT && fs.existsSync(env.PGSSLROOTCERT)) ca = fs.readFileSync(env.PGSSLROOTCERT, 'utf8');
+    cfg.ssl = ca ? { ca, rejectUnauthorized: true, checkServerIdentity: sslmode === 'verify-full' ? undefined : () => undefined } : { rejectUnauthorized: false };
+  } else cfg.ssl = false;
+  return cfg;
+}
+const DB = dbConfig();
+if (DB) {
   const { Pool } = require('pg');
-  const ssl = /sslmode=require|ssl=true/.test(process.env.DATABASE_URL) ? { rejectUnauthorized: false } : undefined;
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl, max: 5 });
+  const pool = new Pool({ ...DB, max: 5, connectionTimeoutMillis: 15000 });
+  pool.on('error', e => console.error('DB pool error:', e.message));
   store.kind = 'postgres';
   store.ready = (async () => {
     await pool.query('CREATE TABLE IF NOT EXISTS tablo_kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated TIMESTAMPTZ DEFAULT now())');
