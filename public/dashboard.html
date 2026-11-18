@@ -60,6 +60,13 @@ h1 b{color:#e4002b}
 .empty{color:#8590aa;text-align:center;padding:30px 10px}
 h3{font:600 17px Oswald;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;color:#aab4cb}
 .edit{display:none;margin-top:10px;gap:8px;flex-wrap:wrap}
+.pform{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pform label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#aab4cb;min-width:0}
+.pform .w2{grid-column:span 2}
+.pform .in{width:100%}
+.edit .pform{width:100%}
+.info{font-size:13px;color:#8590aa;margin-top:4px}
+@media(max-width:600px){.pform{grid-template-columns:1fr 1fr}}
 .editing .edit{display:flex}
 input[type=file].in{padding:8px;font-size:14px}
 @media(max-width:600px){.grid{grid-template-columns:1fr}.mh{grid-template-columns:1fr auto}.mh .md{grid-column:span 2}}
@@ -89,10 +96,9 @@ input[type=file].in{padding:8px;font-size:14px}
   <section class="view" id="v-players">
     <div class="card" style="margin-bottom:12px">
       <h3>Новый игрок</h3>
-      <form class="row" id="addPlayer">
-        <input class="in" id="pName" placeholder="Имя и фамилия" style="flex:1 1 200px" required>
-        <input class="in" type="file" accept="image/*" id="pPhoto" style="flex:1 1 200px">
-        <button class="btn">+ Добавить</button>
+      <form id="addPlayer">
+        <div class="pform" data-form></div>
+        <div class="row" style="margin-top:10px"><button class="btn">+ Добавить игрока</button></div>
       </form>
     </div>
     <input class="in" id="pFilter" placeholder="Поиск игрока" style="width:100%;margin-bottom:12px">
@@ -142,19 +148,36 @@ function confirmBtn(btn,fn,txt='Точно?'){
   const old=btn.textContent; btn._arm=true; btn.textContent=txt;
   setTimeout(()=>{ btn._arm=false; btn.textContent=old; },2500);
 }
-function resizePhoto(file){
+function resizePhoto(file,max=800){
   return new Promise((ok,no)=>{
     if(!file) return ok(null);
+    const alpha=/png|webp|gif/.test(file.type);
     const r=new FileReader();
     r.onload=()=>{const img=new Image();img.onload=()=>{
-      const k=Math.min(1,800/Math.max(img.width,img.height)), c=document.createElement('canvas');
+      const k=Math.min(1,max/Math.max(img.width,img.height)), c=document.createElement('canvas');
       c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height); ok(c.toDataURL('image/jpeg',.85));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height); ok(alpha?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.85));
     };img.onerror=no;img.src=r.result};
     r.onerror=no; r.readAsDataURL(file);
   });
 }
 const photoUrl=id=>id?'/photos/'+id+'.jpg':'';
+const COUNTRIES=[['ru','Россия'],['by','Беларусь'],['kz','Казахстан'],['ua','Украина'],['uz','Узбекистан'],['kg','Киргизия'],['tj','Таджикистан'],['am','Армения'],['az','Азербайджан'],['ge','Грузия'],['md','Молдова'],['lv','Латвия'],['lt','Литва'],['ee','Эстония'],['fi','Финляндия'],['de','Германия'],['none','— без флага —']];
+const INFO=[['city','Город'],['age','Возраст'],['height','Рост'],['rank','Звание'],['club','Клуб'],['cue','Кий']];
+function formHTML(p){ p=p||{};
+  return `<label class="w2">Имя и фамилия<input class="in" name="name" value="${esc(p.name||'')}" required></label>
+   <label>Страна<select class="in" name="country">${COUNTRIES.map(([k,n])=>`<option value="${k}" ${k===(p.country||'ru')?'selected':''}>${n}</option>`).join('')}</select></label>
+   ${INFO.map(([k,l])=>`<label>${l}<input class="in" name="${k}" value="${esc(p[k]||'')}"></label>`).join('')}
+   <label class="w2">Фото (аватар)<input class="in" type="file" accept="image/*" name="photo"></label>
+   <label class="w2">Фото в полный рост (PNG без фона)<input class="in" type="file" accept="image/*" name="body"></label>`;
+}
+async function formData(root){
+  const g=n=>root.querySelector(`[name="${n}"]`), o={name:g('name').value,country:g('country').value};
+  INFO.forEach(([k])=>o[k]=g(k).value);
+  const ph=await resizePhoto(g('photo').files[0],800); if(ph) o.photo=ph;
+  const bd=await resizePhoto(g('body').files[0],1200); if(bd) o.body=bd;
+  return o;
+}
 const initials=n=>String(n||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
 
 /* ---------- tabs ---------- */
@@ -216,35 +239,36 @@ function renderPlayers(){
     <div class="pl"><div class="ava" style="${p.photoId?`background-image:url(${photoUrl(p.photoId)})`:''}">${p.photoId?'':esc(initials(p.name))}</div>
       <div style="min-width:0;flex:1"><div class="nm">${esc(p.name)}</div>
       <div class="st">Матчей <b>${s.n}</b> · Побед <b>${s.w}</b>${s.n?` · <b>${Math.round(s.w/s.n*100)}%</b>`:''}</div>
-      <div class="st">Партии <b>${s.fw}</b> : <b>${s.fl}</b></div></div></div>
+      <div class="st">Партии <b>${s.fw}</b> : <b>${s.fl}</b></div>
+      <div class="info">${esc([p.city,p.age&&p.age+' лет',p.height&&p.height+' см',p.rank,p.club,p.cue&&'кий: '+p.cue].filter(Boolean).join(' · '))}${p.bodyId?' · фото в рост ✓':''}</div></div></div>
     <div class="row" style="margin-top:10px">
       <button class="btn s sm" data-hist="${esc(p.name)}">Матчи игрока</button>
       <button class="btn s sm" data-ed="1">✎ Изменить</button>
       <button class="btn d sm" data-del="${p.id}">Удалить</button>
     </div>
-    <div class="edit"><input class="in" value="${esc(p.name)}" style="flex:1 1 160px"><input class="in" type="file" accept="image/*" style="flex:1 1 160px">
-      <button class="btn g sm" data-save="${p.id}">Сохранить</button>${p.photoId?`<button class="btn s sm" data-nophoto="${p.id}">Убрать фото</button>`:''}</div>
+    <div class="edit"><div class="pform">${formHTML(p)}</div>
+      <button class="btn g sm" data-save="${p.id}">Сохранить</button>${p.photoId?`<button class="btn s sm" data-nophoto="${p.id}">Убрать фото</button>`:''}${p.bodyId?`<button class="btn s sm" data-nobody="${p.id}">Убрать фото в рост</button>`:''}</div>
   </div>`}).join(''):'<div class="empty">Игроков пока нет. Добавьте их — потом на пульте можно будет выбрать игрока из списка, и фото подставится само.</div>';
 }
 $('pFilter').oninput=renderPlayers;
 $('addPlayer').onsubmit=async e=>{
   e.preventDefault(); const btn=e.submitter; btn.disabled=true;
-  try{ const photo=await resizePhoto($('pPhoto').files[0]); await api('/api/players',{method:'POST',body:{name:$('pName').value,photo}});
-    $('pName').value=''; $('pPhoto').value=''; toast('Игрок добавлен'); loadPlayers(); }
+  try{ const f=document.querySelector('#addPlayer [data-form]'); await api('/api/players',{method:'POST',body:await formData(f)});
+    f.innerHTML=formHTML(); toast('Игрок добавлен'); loadPlayers(); }
   finally{ btn.disabled=false; }
 };
 $('players').onclick=async e=>{
   const b=e.target.closest('button'); if(!b) return; const card=b.closest('[data-id]');
   if(b.dataset.ed) card.classList.toggle('editing');
   if(b.dataset.hist){ $('hFilter').value=b.dataset.hist; showTab('history'); }
-  if(b.dataset.save){ const [n,f]=card.querySelectorAll('.edit input'); const photo=await resizePhoto(f.files[0]);
-    await api('/api/players/'+b.dataset.save,{method:'PATCH',body:{name:n.value,...(photo?{photo}:{})}}); toast('Сохранено'); loadPlayers(); }
+  if(b.dataset.save){ b.disabled=true; try{ await api('/api/players/'+b.dataset.save,{method:'PATCH',body:await formData(card.querySelector('.edit .pform'))}); toast('Сохранено'); loadPlayers(); } finally{ b.disabled=false; } }
+  if(b.dataset.nobody){ await api('/api/players/'+b.dataset.nobody,{method:'PATCH',body:{body:''}}); loadPlayers(); }
   if(b.dataset.nophoto){ await api('/api/players/'+b.dataset.nophoto,{method:'PATCH',body:{photo:''}}); loadPlayers(); }
   if(b.dataset.del) confirmBtn(b,async()=>{ await api('/api/players/'+b.dataset.del,{method:'DELETE'}); toast('Игрок удалён'); loadPlayers(); },'Удалить?');
 };
 
 /* ---------- history ---------- */
-const DET=[['Забито шаров',p=>p.foreign+p.own],['Чужих',p=>p.foreign],['Своих',p=>p.own],['Лучшая серия',p=>p.best],['Атаки',p=>p.attacks],
+const DET=[['Забито шаров',p=>p.foreign+p.own+(p.luck||0)],['Чужих',p=>p.foreign],['Своих',p=>p.own],['Случайных',p=>p.luck||0],['Начальный удар',p=>(p.breaksOk||0)+'/'+(p.breaks||0)],['Лучшая серия',p=>p.best],['Атаки',p=>p.attacks],
   ['Реализация',p=>p.attacks?Math.round((p.foreign+p.own)/p.attacks*100)+'%':'—'],['Отыгрыши',p=>p.safeties],['Фолы',p=>p.fouls],
   ['Время на удар',p=>p.shots?Math.round(p.time/p.shots/1000)+' с':'—']];
 async function loadHistory(){ MATCHES=await api('/api/matches'); renderHistory(); }
@@ -284,6 +308,7 @@ $('restore').onchange=async e=>{
 $('logout').onclick=async()=>{ await fetch('/api/logout'); location.href='/login'; };
 
 loadMe();
+document.querySelector('#addPlayer [data-form]').innerHTML=formHTML();
 {const h=(location.hash||'').slice(1); showTab(['tables','players','history','settings'].includes(h)?h:'tables');}
 setInterval(()=>{ if($('v-tables').classList.contains('act')&&!document.querySelector('#tables .editing')) loadTables().catch(()=>{}); },5000);
 </script>
