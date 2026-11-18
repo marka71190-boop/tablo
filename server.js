@@ -22,6 +22,7 @@ const SECRET = process.env.SESSION_SECRET || crypto.createHash('sha256').update(
 const PUB = path.join(__dirname, 'public');
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const MAX_BODY = 8 * 1024 * 1024;
+const MAX_MEDIA = 40 * 1024 * 1024; // картинка или видео для заставки перерыва
 
 /* ===================== storage ===================== */
 const store = { kind: 'file', ready: null };
@@ -121,6 +122,14 @@ function readBody(req) {
     req.on('error', no);
   });
 }
+function readRaw(req, max) {
+  return new Promise((ok, no) => {
+    let n = 0; const chunks = [];
+    req.on('data', c => { n += c.length; if (n > max) { no(new Error('too big')); req.destroy(); } else chunks.push(c); });
+    req.on('end', () => ok(Buffer.concat(chunks)));
+    req.on('error', no);
+  });
+}
 const MIME = { '.webp': 'image/webp', '.jpg': 'image/jpeg', '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 function serveFile(res, rel, cache) {
   const f = path.normalize(path.join(PUB, rel));
@@ -183,6 +192,44 @@ function matchFrom(tableId, st) {
 }
 function csvEscape(v) { v = String(v == null ? '' : v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
 
+/* ===================== tournament bracket ===================== */
+const normName = (s) => String(s || '').toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
+const num = (v) => (v === '' || v == null || isNaN(+v) ? null : +v);
+function cleanBracket(b) {
+  const rounds = (Array.isArray(b && b.rounds) ? b.rounds : []).slice(0, 10).map(r => ({
+    name: clean(r && r.name, 40),
+    matches: (Array.isArray(r && r.matches) ? r.matches : []).slice(0, 128).map(m => ({
+      a: clean(m && m.a, 60), b: clean(m && m.b, 60), sa: num(m && m.sa), sb: num(m && m.sb),
+      table: clean(m && m.table, 30), time: clean(m && m.time, 30)
+    }))
+  }));
+  return { title: clean(b && b.title, 120), rounds, updated: Date.now() };
+}
+const mWinner = (m) => (m.sa != null && m.sb != null && m.sa !== m.sb && m.a && m.b ? (m.sa > m.sb ? m.a : m.b) : null);
+// победитель матча k раунда r проходит в матч floor(k/2) раунда r+1 (k чётный — первым игроком)
+function propagate(br) {
+  for (let r = 0; r < br.rounds.length - 1; r++) {
+    br.rounds[r].matches.forEach((m, k) => {
+      const w = mWinner(m), next = br.rounds[r + 1].matches[k >> 1]; if (!w || !next) return;
+      const slot = k % 2 ? 'b' : 'a';
+      if (!next[slot]) next[slot] = w;
+    });
+  }
+  return br;
+}
+function bracketResult(mt) {
+  const br = get('bracket', null); if (!br || mt.players.length < 2) return;
+  const [p, q] = mt.players.map(x => normName(x.name));
+  for (const r of br.rounds) for (const m of r.matches) {
+    if (m.sa != null || m.sb != null) continue;
+    const a = normName(m.a), b = normName(m.b);
+    if (a === p && b === q) { m.sa = mt.players[0].frames; m.sb = mt.players[1].frames; }
+    else if (a === q && b === p) { m.sa = mt.players[1].frames; m.sb = mt.players[0].frames; }
+    else continue;
+    br.updated = Date.now(); set('bracket', propagate(br)); return;
+  }
+}
+
 /* ===================== HTTP ===================== */
 async function api(req, res, url) {
   const p = url.pathname, m = req.method;
@@ -211,7 +258,20 @@ async function api(req, res, url) {
     const t = tableById(mm[1]); return t ? json(res, t) : json(res, { error: 'Стол не найден' }, 404);
   }
 
+  if (p === '/api/bracket' && m === 'GET') return json(res, get('bracket', null));
+
   if (!need()) return;
+
+  if (p === '/api/bracket' && m === 'PUT') { const b = await readBody(req); const br = propagate(cleanBracket(b)); set('bracket', br); return json(res, br); }
+  if (p === '/api/bracket' && m === 'DELETE') { del('bracket'); return json(res, { ok: true }); }
+  if (p === '/api/media' && m === 'POST') {
+    const type = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    if (!/^(image\/(jpeg|png|webp|gif)|video\/(mp4|webm))$/.test(type)) return json(res, { error: 'Нужна картинка (JPG, PNG, WebP, GIF) или видео (MP4, WebM)' }, 400);
+    let buf; try { buf = await readRaw(req, MAX_MEDIA); } catch (e) { return json(res, { error: 'Файл больше 40 МБ' }, 413); }
+    if (!buf.length) return json(res, { error: 'Пустой файл' }, 400);
+    const id = uid(10); set('media:' + id, { m: type, b: buf.toString('base64') });
+    return json(res, { id, url: '/media/' + id, kind: type.startsWith('video') ? 'video' : 'image' });
+  }
 
   // tables
   if (p === '/api/tables' && m === 'GET') {
@@ -264,6 +324,7 @@ async function api(req, res, url) {
     const b = await readBody(req);
     const st = b.state || liveOf(b.table).state; if (!st) return json(res, { error: 'Нет данных матча' }, 400);
     const mt = matchFrom(b.table, st); const list = get('matches', []); list.unshift(mt);
+    try { bracketResult(mt); } catch (e) { console.error('bracket', e.message); }
     if (list.length > 10000) list.length = 10000;
     set('matches', list); return json(res, mt);
   }
@@ -309,6 +370,21 @@ const server = http.createServer(async (req, res) => {
       const ph = get('photo:' + mm[1]); if (!ph) return send(res, 404, 'Not found', 'text/plain');
       res.writeHead(200, { 'Content-Type': 'image/' + ph.t, 'Cache-Control': 'public, max-age=31536000, immutable' });
       return res.end(Buffer.from(ph.b, 'base64'));
+    }
+    if ((mm = /^\/media\/([\w-]+)$/.exec(p))) {
+      const md = get('media:' + mm[1]); if (!md) return send(res, 404, 'Not found', 'text/plain');
+      const buf = md._buf || (md._buf = Buffer.from(md.b, 'base64'));
+      Object.defineProperty(md, '_buf', { value: buf, enumerable: false, configurable: true, writable: true });
+      const head = { 'Content-Type': md.m, 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=31536000, immutable' };
+      const r = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
+      if (r) {
+        let a = r[1] === '' ? buf.length - +r[2] : +r[1], e = r[1] !== '' && r[2] !== '' ? +r[2] : buf.length - 1;
+        a = Math.max(0, a); e = Math.min(buf.length - 1, e);
+        if (a > e) { res.writeHead(416, { 'Content-Range': `bytes */${buf.length}` }); return res.end(); }
+        res.writeHead(206, { ...head, 'Content-Range': `bytes ${a}-${e}/${buf.length}`, 'Content-Length': e - a + 1 });
+        return res.end(buf.subarray(a, e + 1));
+      }
+      res.writeHead(200, { ...head, 'Content-Length': buf.length }); return res.end(buf);
     }
     if (p.startsWith('/fonts/') || p.startsWith('/js/')) return serveFile(res, p, true);
     if (p === '/login') return serveFile(res, 'login.html');

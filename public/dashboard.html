@@ -66,6 +66,13 @@ h3{font:600 17px Oswald;text-transform:uppercase;letter-spacing:1px;margin-botto
 .pform .in{width:100%}
 .edit .pform{width:100%}
 .info{font-size:13px;color:#8590aa;margin-top:4px}
+.brr{margin-top:14px}.brr:first-child{margin-top:0}
+.brr h4{font:600 16px Oswald;text-transform:uppercase;letter-spacing:1px;color:#c9a14a;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.brr h4 input{max-width:220px}
+.brm{display:grid;grid-template-columns:1fr 54px 54px 1fr 90px 90px;gap:6px;margin-top:6px}
+.brm .in{padding:8px;font-size:14px;width:100%}
+.brm .w{border-color:#c9a14a;color:#ffd166}
+@media(max-width:700px){.brm{grid-template-columns:1fr 46px 46px 1fr}.brm .opt{display:none}}
 @media(max-width:600px){.pform{grid-template-columns:1fr 1fr}}
 .editing .edit{display:flex}
 input[type=file].in{padding:8px;font-size:14px}
@@ -82,6 +89,7 @@ input[type=file].in{padding:8px;font-size:14px}
   <nav class="tabs">
     <button data-tab="tables" class="act">Столы</button>
     <button data-tab="players">Игроки</button>
+    <button data-tab="bracket">Сетка</button>
     <button data-tab="history">История</button>
     <button data-tab="settings">Настройки</button>
   </nav>
@@ -103,6 +111,21 @@ input[type=file].in{padding:8px;font-size:14px}
     </div>
     <input class="in" id="pFilter" placeholder="Поиск игрока" style="width:100%;margin-bottom:12px">
     <div class="grid" id="players"></div>
+  </section>
+
+  <section class="view" id="v-bracket">
+    <div class="card" style="margin-bottom:12px">
+      <h3>Турнирная сетка из Excel</h3>
+      <p class="muted" style="margin-bottom:12px;line-height:1.5">Колонки: <b>Раунд · Игрок 1 · Игрок 2 · Счёт 1 · Счёт 2 · Стол · Время</b>. Достаточно заполнить первый раунд — следующие раунды создадутся сами.
+      Когда на пульте нажимают «Сохранить матч», счёт попадает в сетку, а победитель проходит дальше.</p>
+      <div class="row">
+        <button class="btn s" id="brTpl">⬇ Скачать шаблон Excel</button>
+        <label class="btn">⬆ Загрузить Excel / CSV<input type="file" accept=".xlsx,.xls,.csv" id="brFile" hidden></label>
+        <button class="btn s" id="brExport">⬇ Выгрузить сетку в Excel</button>
+        <button class="btn d" id="brClear">Очистить сетку</button>
+      </div>
+    </div>
+    <div class="card" id="brEdit"></div>
   </section>
 
   <section class="view" id="v-history">
@@ -186,7 +209,7 @@ function showTab(t){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('act',b.dataset.tab===t));
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('act',v.id==='v-'+t));
   if(location.hash!=='#'+t) history.replaceState(null,'','#'+t);
-  if(t==='tables') loadTables(); if(t==='players') loadPlayers(); if(t==='history') loadHistory();
+  if(t==='tables') loadTables(); if(t==='players') loadPlayers(); if(t==='history') loadHistory(); if(t==='bracket') loadBr();
 }
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button'); if(b) showTab(b.dataset.tab)};
 
@@ -306,11 +329,88 @@ $('restore').onchange=async e=>{
   catch(_){ toast('Не удалось восстановить',true); }
   e.target.value='';
 };
+/* ---------- bracket ---------- */
+let BRK=null;
+function xlsxLib(){
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src='/js/xlsx.mini.min.js'; sc.onload=()=>ok(window.XLSX); sc.onerror=no; document.head.appendChild(sc); });
+}
+const RN=n=>n===1?'Финал':n===2?'Полуфинал':n===4?'Четвертьфинал':`1/${n} финала`;
+function autoRounds(rounds){
+  while(rounds.length&&rounds[rounds.length-1].matches.length>1){
+    const n=Math.ceil(rounds[rounds.length-1].matches.length/2);
+    rounds.push({name:RN(n),matches:Array.from({length:n},()=>({a:'',b:'',sa:null,sb:null,table:'',time:''}))});
+  }
+  return rounds;
+}
+function parseRows(rows){
+  const low=v=>String(v??'').toLowerCase().replace(/ё/g,'е').trim();
+  let hi=rows.findIndex(r=>r.some(c=>/игрок/.test(low(c))));
+  const H=hi>=0?rows[hi].map(low):[], col=(re,d)=>{ const k=H.findIndex(h=>re.test(h)); return k>=0?k:d; };
+  const cR=col(/раунд|круг|стади/,0), cA=col(/игрок\s*1|первый/,1), cB=col(/игрок\s*2|второй/,2),
+        cSA=col(/сч[её]т\s*1|очки\s*1/,3), cSB=col(/сч[её]т\s*2|очки\s*2/,4), cT=col(/стол/,5), cTm=col(/время|дата/,6);
+  const num=v=>v===''||v==null||isNaN(+v)?null:+v, rounds=[], idx={};
+  rows.slice(hi+1).forEach(r=>{
+    const a=String(r[cA]??'').trim(), b=String(r[cB]??'').trim(); if(!a&&!b) return;
+    let rn=String(r[cR]??'').trim()||(rounds.length?rounds[rounds.length-1].name:'1 раунд');
+    if(!(rn in idx)){ idx[rn]=rounds.length; rounds.push({name:rn,matches:[]}); }
+    let tm=r[cTm]; if(tm instanceof Date) tm=tm.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    rounds[idx[rn]].matches.push({a,b,sa:num(r[cSA]),sb:num(r[cSB]),table:String(r[cT]??'').trim(),time:String(tm??'').trim()});
+  });
+  return autoRounds(rounds);
+}
+async function loadBr(){ BRK=await api('/api/bracket'); renderBr(); }
+function renderBr(){
+  const box=$('brEdit');
+  if(!BRK||!BRK.rounds||!BRK.rounds.length){ box.innerHTML='<div class="empty">Сетка не загружена. Скачайте шаблон, заполните игроков первого раунда и загрузите файл.</div>'; return; }
+  box.innerHTML=`<div class="row" style="margin-bottom:10px"><input class="in" id="brTitle" placeholder="Название турнира" value="${esc(BRK.title||'')}" style="flex:1"><button class="btn g" id="brSave">Сохранить сетку</button></div>`+
+    BRK.rounds.map((r,ri)=>`<div class="brr"><h4>Раунд <input class="in" data-rn="${ri}" value="${esc(r.name)}"></h4>${r.matches.map((m,k)=>{const wa=m.sa!=null&&m.sb!=null&&m.sa>m.sb, wb=m.sa!=null&&m.sb!=null&&m.sb>m.sa;
+      return `<div class="brm" data-m="${ri}:${k}"><input class="in ${wa?'w':''}" data-f="a" value="${esc(m.a)}" placeholder="Игрок 1"><input class="in" data-f="sa" value="${m.sa??''}" inputmode="numeric"><input class="in" data-f="sb" value="${m.sb??''}" inputmode="numeric"><input class="in ${wb?'w':''}" data-f="b" value="${esc(m.b)}" placeholder="Игрок 2"><input class="in opt" data-f="table" value="${esc(m.table)}" placeholder="Стол"><input class="in opt" data-f="time" value="${esc(m.time)}" placeholder="Время"></div>`}).join('')}</div>`).join('');
+  $('brSave').onclick=saveBr;
+}
+function collectBr(){
+  const b={title:$('brTitle').value,rounds:BRK.rounds.map(r=>({name:r.name,matches:r.matches.map(m=>({...m}))}))};
+  document.querySelectorAll('[data-rn]').forEach(el=>b.rounds[+el.dataset.rn].name=el.value);
+  document.querySelectorAll('.brm').forEach(row=>{ const [ri,k]=row.dataset.m.split(':').map(Number), m=b.rounds[ri].matches[k];
+    row.querySelectorAll('[data-f]').forEach(el=>{ const f=el.dataset.f; m[f]=(f==='sa'||f==='sb')?(el.value.trim()===''?null:+el.value):el.value; }); });
+  return b;
+}
+async function saveBr(){ BRK=await api('/api/bracket',{method:'PUT',body:collectBr()}); toast('Сетка сохранена'); renderBr(); }
+$('brFile').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{
+    const X=await xlsxLib(), buf=await f.arrayBuffer(); let wb;
+    if(/\.csv$/i.test(f.name)||f.type==='text/csv'){ // CSV: UTF-8, а если не читается — Windows-1251 (так сохраняет русский Excel)
+      let txt; try{ txt=new TextDecoder('utf-8',{fatal:true}).decode(buf) }catch(_){ txt=new TextDecoder('windows-1251').decode(buf) }
+      wb=X.read(txt.replace(/^\uFEFF/,''),{type:'string',cellDates:true});
+    } else wb=X.read(buf,{type:'array',cellDates:true});
+    const rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:'',raw:true});
+    const rounds=parseRows(rows); if(!rounds.length) throw new Error('В файле не нашлось ни одного матча');
+    BRK=await api('/api/bracket',{method:'PUT',body:{title:(BRK&&BRK.title)||f.name.replace(/\.\w+$/,''),rounds}});
+    toast(`Сетка загружена: ${rounds.length} раунд(а), ${rounds[0].matches.length} матч(ей) в первом`); renderBr();
+  }catch(err){ toast(err&&err.message?err.message:'Не удалось прочитать файл',true); }
+};
+$('brTpl').onclick=async()=>{
+  const X=await xlsxLib();
+  const rows=[['Раунд','Игрок 1','Игрок 2','Счёт 1','Счёт 2','Стол','Время'],
+    ['Четвертьфинал','Иванов Иван','Петров Пётр','','','Стол 1','12:00'],['Четвертьфинал','Сидоров Сергей','Кузнецов Алексей','','','Стол 2','12:00'],
+    ['Четвертьфинал','Смирнов Олег','Попов Дмитрий','','','Стол 1','14:00'],['Четвертьфинал','Васильев Андрей','Новиков Максим','','','Стол 2','14:00']];
+  const ws=X.utils.aoa_to_sheet(rows); ws['!cols']=[{wch:16},{wch:24},{wch:24},{wch:8},{wch:8},{wch:10},{wch:10}];
+  const wb=X.utils.book_new(); X.utils.book_append_sheet(wb,ws,'Сетка'); X.writeFile(wb,'shablon-setki.xlsx');
+};
+$('brExport').onclick=async()=>{
+  if(!BRK||!BRK.rounds) return toast('Сетка пустая',true);
+  const X=await xlsxLib(), rows=[['Раунд','Игрок 1','Игрок 2','Счёт 1','Счёт 2','Стол','Время']];
+  BRK.rounds.forEach(r=>r.matches.forEach(m=>rows.push([r.name,m.a,m.b,m.sa??'',m.sb??'',m.table,m.time])));
+  const wb=X.utils.book_new(); X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(rows),'Сетка'); X.writeFile(wb,'setka.xlsx');
+};
+$('brClear').onclick=e=>confirmBtn(e.target,async()=>{ await api('/api/bracket',{method:'DELETE'}); BRK=null; renderBr(); toast('Сетка очищена'); },'Точно очистить?');
+
 $('logout').onclick=async()=>{ await fetch('/api/logout'); location.href='/login'; };
 
 loadMe();
 document.querySelector('#addPlayer [data-form]').innerHTML=formHTML();
-{const h=(location.hash||'').slice(1); showTab(['tables','players','history','settings'].includes(h)?h:'tables');}
+{const h=(location.hash||'').slice(1); showTab(['tables','players','bracket','history','settings'].includes(h)?h:'tables');}
 setInterval(()=>{ if($('v-tables').classList.contains('act')&&!document.querySelector('#tables .editing')) loadTables().catch(()=>{}); },5000);
 </script>
 </body>
