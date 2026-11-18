@@ -1,0 +1,331 @@
+'use strict';
+/*
+ * Табло «Пирамида» — сервер.
+ * Переменные окружения:
+ *   PORT            порт (по умолчанию 8080)
+ *   ADMIN_PASSWORD  пароль оператора (обязательно задайте!)
+ *   SESSION_SECRET  секрет для подписи входа (необязательно)
+ *   DATABASE_URL    postgres://user:pass@host:5432/db — постоянное хранение (рекомендуется)
+ *   DATA_DIR        папка для файлового хранения, если базы нет (по умолчанию ./data)
+ */
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { WebSocketServer } = require('ws');
+
+const PORT = +process.env.PORT || 8080;
+const PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+const SECRET = process.env.SESSION_SECRET || crypto.createHash('sha256').update('tablo:' + PASSWORD).digest('hex');
+const PUB = path.join(__dirname, 'public');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const MAX_BODY = 8 * 1024 * 1024;
+
+/* ===================== storage ===================== */
+const store = { kind: 'file', ready: null };
+let mem = {};
+if (process.env.DATABASE_URL) {
+  const { Pool } = require('pg');
+  const ssl = /sslmode=require|ssl=true/.test(process.env.DATABASE_URL) ? { rejectUnauthorized: false } : undefined;
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl, max: 5 });
+  store.kind = 'postgres';
+  store.ready = (async () => {
+    await pool.query('CREATE TABLE IF NOT EXISTS tablo_kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated TIMESTAMPTZ DEFAULT now())');
+    const r = await pool.query('SELECT k, v FROM tablo_kv');
+    for (const row of r.rows) { try { mem[row.k] = JSON.parse(row.v); } catch (e) {} }
+  })();
+  const pending = new Map(); let timer = null;
+  store.flush = async () => {
+    timer = null; const items = [...pending]; pending.clear();
+    for (const [k, del] of items) {
+      try {
+        if (del || mem[k] === undefined) await pool.query('DELETE FROM tablo_kv WHERE k=$1', [k]);
+        else await pool.query('INSERT INTO tablo_kv(k,v,updated) VALUES($1,$2,now()) ON CONFLICT (k) DO UPDATE SET v=EXCLUDED.v, updated=now()', [k, JSON.stringify(mem[k])]);
+      } catch (e) { console.error('DB write failed', k, e.message); pending.set(k, del); }
+    }
+  };
+  store.mark = (k, del) => { pending.set(k, !!del); if (!timer) timer = setTimeout(store.flush, 400); };
+} else {
+  const file = path.join(DATA_DIR, 'tablo.json');
+  store.ready = (async () => {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    try { mem = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { mem = {}; }
+  })();
+  let timer = null;
+  store.flush = async () => {
+    timer = null;
+    const tmp = file + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(mem)); fs.renameSync(tmp, file);
+  };
+  store.mark = () => { if (!timer) timer = setTimeout(store.flush, 500); };
+}
+const get = (k, d) => (mem[k] === undefined ? d : mem[k]);
+const set = (k, v) => { mem[k] = v; store.mark(k, false); };
+const del = (k) => { delete mem[k]; store.mark(k, true); };
+
+/* ===================== helpers ===================== */
+const uid = (n = 8) => crypto.randomBytes(n).toString('base64url').replace(/[^a-zA-Z0-9]/g, '').slice(0, n + 2) || uid(n);
+const sign = (s) => crypto.createHmac('sha256', SECRET).update(s).digest('base64url');
+function makeToken() { const p = Date.now().toString(36) + '.' + uid(6); return p + '.' + sign(p); }
+function checkToken(t) {
+  if (!t) return false;
+  const i = t.lastIndexOf('.'); if (i < 0) return false;
+  const p = t.slice(0, i), s = t.slice(i + 1);
+  const exp = sign(p);
+  if (s.length !== exp.length || !crypto.timingSafeEqual(Buffer.from(s), Buffer.from(exp))) return false;
+  const ts = parseInt(p.split('.')[0], 36);
+  return Date.now() - ts < 1000 * 60 * 60 * 24 * 60; // 60 дней
+}
+function cookies(req) {
+  const o = {}; (req.headers.cookie || '').split(';').forEach(c => { const i = c.indexOf('='); if (i > 0) o[c.slice(0, i).trim()] = decodeURIComponent(c.slice(i + 1).trim()); });
+  return o;
+}
+const authed = (req) => checkToken(cookies(req).sid);
+function send(res, code, body, type = 'application/json; charset=utf-8', extra = {}) {
+  const data = typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body);
+  res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', ...extra });
+  res.end(data);
+}
+const json = (res, body, code = 200) => send(res, code, body);
+function readBody(req) {
+  return new Promise((ok, no) => {
+    let n = 0; const chunks = [];
+    req.on('data', c => { n += c.length; if (n > MAX_BODY) { no(new Error('too big')); req.destroy(); } else chunks.push(c); });
+    req.on('end', () => { try { ok(chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}); } catch (e) { no(e); } });
+    req.on('error', no);
+  });
+}
+const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
+function serveFile(res, rel, cache) {
+  const f = path.normalize(path.join(PUB, rel));
+  if (!f.startsWith(PUB)) return send(res, 404, 'Not found', 'text/plain');
+  fs.readFile(f, (e, d) => {
+    if (e) return send(res, 404, 'Not found', 'text/plain');
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream', 'Cache-Control': cache ? 'public, max-age=604800' : 'no-cache' });
+    res.end(d);
+  });
+}
+const clean = (s, n = 80) => String(s == null ? '' : s).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n);
+function savePhoto(dataUrl) {
+  const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
+  if (!m) return null;
+  if (m[2].length > 3 * 1024 * 1024) return null;
+  const id = uid(10); set('photo:' + id, { t: m[1], b: m[2] }); return id;
+}
+
+/* login rate limit */
+const tries = new Map();
+function limited(ip) {
+  const now = Date.now(), t = (tries.get(ip) || []).filter(x => now - x < 10 * 60 * 1000);
+  tries.set(ip, t); return t.length >= 10;
+}
+
+/* ===================== tables & live state ===================== */
+const tables = () => get('tables', []);
+const tableById = (id) => tables().find(t => t.id === id);
+const live = new Map(); // id -> {state, rev, el, at}
+function liveOf(id) {
+  if (!live.has(id)) { const s = get('state:' + id, null); live.set(id, s ? s : { state: null, rev: 0, el: 0, at: Date.now() }); }
+  return live.get(id);
+}
+function elNow(L) { return L.state && L.state.clock && L.state.clock.running ? L.el + (Date.now() - L.at) : L.el; }
+function snapshot(id) { const L = liveOf(id); return { type: 'state', rev: L.rev, state: L.state, el: elNow(L), serverTime: Date.now() }; }
+function putState(id, state, el, from) {
+  const L = liveOf(id);
+  L.state = state; L.rev++; L.el = +el || 0; L.at = Date.now();
+  set('state:' + id, L);
+  const msg = JSON.stringify(snapshot(id));
+  for (const c of clients) if (c.table === id && c !== from && c.readyState === 1) c.send(msg);
+  return L.rev;
+}
+
+/* ===================== matches ===================== */
+const STAT_KEYS = ['frames', 'balls', 'foreign', 'own', 'best', 'attacks', 'safeties', 'fouls', 'time', 'shots'];
+function matchFrom(tableId, st) {
+  const t = tableById(tableId) || { name: '' };
+  const players = (st.players || []).slice(0, 2).map(p => {
+    const o = { name: clean(p.name), playerId: p.playerId || null, photoId: ((/\/photos\/([\w-]+)\.jpg/.exec(p.photo || '') || [])[1]) || null };
+    STAT_KEYS.forEach(k => o[k] = +p[k] || 0); return o;
+  });
+  const race = +st.raceTo || 0;
+  let winner = players.findIndex(p => race && p.frames >= race);
+  if (winner < 0 && players.length === 2 && players[0].frames !== players[1].frames) winner = players[0].frames > players[1].frames ? 0 : 1;
+  return { id: uid(8), at: Date.now(), tableId, tableName: t.name, title: clean(st.title, 120), subtitle: clean(st.subtitle, 120), raceTo: race, players, winner };
+}
+function csvEscape(v) { v = String(v == null ? '' : v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+
+/* ===================== HTTP ===================== */
+async function api(req, res, url) {
+  const p = url.pathname, m = req.method;
+  const need = () => { if (!authed(req)) { json(res, { error: 'auth' }, 401); return false; } return true; };
+
+  if (p === '/api/login' && m === 'POST') {
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+    if (limited(ip)) return json(res, { error: 'Слишком много попыток. Подождите 10 минут.' }, 429);
+    const b = await readBody(req);
+    const a = Buffer.from(String(b.password || '')), e = Buffer.from(PASSWORD);
+    if (a.length !== e.length || !crypto.timingSafeEqual(a, e)) { tries.get(ip).push(Date.now()); return json(res, { error: 'Неверный пароль' }, 403); }
+    const secure = (req.headers['x-forwarded-proto'] || '').includes('https') ? '; Secure' : '';
+    return send(res, 200, { ok: true }, undefined, { 'Set-Cookie': `sid=${makeToken()}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 60}${secure}` });
+  }
+  if (p === '/api/logout') return send(res, 200, { ok: true }, undefined, { 'Set-Cookie': 'sid=; Path=/; Max-Age=0' });
+  if (p === '/api/me') return json(res, { auth: authed(req), storage: store.kind, defaultPassword: !process.env.ADMIN_PASSWORD });
+
+  // public read of a table state (polling fallback for overlay)
+  let mm;
+  if ((mm = /^\/api\/state\/([\w-]+)$/.exec(p))) {
+    const id = mm[1]; if (!tableById(id)) return json(res, { error: 'Стол не найден' }, 404);
+    if (m === 'GET') return json(res, snapshot(id));
+    if (m === 'POST') { if (!need()) return; const b = await readBody(req); return json(res, { rev: putState(id, b.state, b.el, null) }); }
+  }
+  if ((mm = /^\/api\/table\/([\w-]+)$/.exec(p)) && m === 'GET') {
+    const t = tableById(mm[1]); return t ? json(res, t) : json(res, { error: 'Стол не найден' }, 404);
+  }
+
+  if (!need()) return;
+
+  // tables
+  if (p === '/api/tables' && m === 'GET') {
+    return json(res, tables().map(t => { const L = liveOf(t.id), s = L.state; return { ...t, live: s ? { title: s.title, players: (s.players || []).map(x => ({ name: x.name, frames: x.frames, balls: x.balls })), mode: s.mode } : null }; }));
+  }
+  if (p === '/api/tables' && m === 'POST') {
+    const b = await readBody(req); const list = tables();
+    const t = { id: uid(6).toLowerCase(), name: clean(b.name) || ('Стол ' + (list.length + 1)), createdAt: Date.now() };
+    list.push(t); set('tables', list); return json(res, t);
+  }
+  if ((mm = /^\/api\/tables\/([\w-]+)$/.exec(p))) {
+    const list = tables(), i = list.findIndex(t => t.id === mm[1]);
+    if (i < 0) return json(res, { error: 'Стол не найден' }, 404);
+    if (m === 'PATCH') { const b = await readBody(req); list[i].name = clean(b.name) || list[i].name; set('tables', list); return json(res, list[i]); }
+    if (m === 'DELETE') { list.splice(i, 1); set('tables', list); del('state:' + mm[1]); live.delete(mm[1]); return json(res, { ok: true }); }
+  }
+
+  // players
+  if (p === '/api/players' && m === 'GET') return json(res, get('players', []));
+  if (p === '/api/players' && m === 'POST') {
+    const b = await readBody(req); const list = get('players', []);
+    const pl = { id: uid(6), name: clean(b.name) || 'Игрок', photoId: b.photo ? savePhoto(b.photo) : null, note: clean(b.note, 120) };
+    list.push(pl); list.sort((a, b2) => a.name.localeCompare(b2.name, 'ru')); set('players', list); return json(res, pl);
+  }
+  if ((mm = /^\/api\/players\/([\w-]+)$/.exec(p))) {
+    const list = get('players', []), i = list.findIndex(x => x.id === mm[1]);
+    if (i < 0) return json(res, { error: 'Игрок не найден' }, 404);
+    if (m === 'PATCH') {
+      const b = await readBody(req);
+      if (b.name != null) list[i].name = clean(b.name) || list[i].name;
+      if (b.note != null) list[i].note = clean(b.note, 120);
+      if (b.photo) { const old = list[i].photoId; const id = savePhoto(b.photo); if (id) { list[i].photoId = id; if (old) del('photo:' + old); } }
+      if (b.photo === '') list[i].photoId = null;
+      list.sort((a, b2) => a.name.localeCompare(b2.name, 'ru')); set('players', list); return json(res, list.find(x => x.id === mm[1]));
+    }
+    if (m === 'DELETE') { list.splice(i, 1); set('players', list); return json(res, { ok: true }); }
+  }
+  if (p === '/api/photo' && m === 'POST') {
+    const b = await readBody(req); const id = savePhoto(b.photo);
+    return id ? json(res, { id }) : json(res, { error: 'Неверное изображение' }, 400);
+  }
+
+  // matches
+  if (p === '/api/matches' && m === 'GET') return json(res, get('matches', []));
+  if (p === '/api/matches' && m === 'POST') {
+    const b = await readBody(req);
+    const st = b.state || liveOf(b.table).state; if (!st) return json(res, { error: 'Нет данных матча' }, 400);
+    const mt = matchFrom(b.table, st); const list = get('matches', []); list.unshift(mt);
+    if (list.length > 10000) list.length = 10000;
+    set('matches', list); return json(res, mt);
+  }
+  if ((mm = /^\/api\/matches\/([\w-]+)$/.exec(p)) && m === 'DELETE') {
+    const list = get('matches', []).filter(x => x.id !== mm[1]); set('matches', list); return json(res, { ok: true });
+  }
+  if (p === '/api/matches.csv') {
+    const rows = [['Дата', 'Стол', 'Турнир', 'Стадия', 'Игрок 1', 'Партии 1', 'Игрок 2', 'Партии 2', 'Победитель',
+      'Забито 1', 'Чужих 1', 'Своих 1', 'Серия 1', 'Атаки 1', 'Отыгрыши 1', 'Фолы 1',
+      'Забито 2', 'Чужих 2', 'Своих 2', 'Серия 2', 'Атаки 2', 'Отыгрыши 2', 'Фолы 2']];
+    for (const x of get('matches', [])) {
+      const [a, b] = x.players; const d = new Date(x.at);
+      const st = q => [q.foreign + q.own, q.foreign, q.own, q.best, q.attacks, q.safeties, q.fouls];
+      rows.push([d.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), x.tableName, x.title, x.subtitle, a.name, a.frames, b.name, b.frames, x.winner >= 0 ? x.players[x.winner].name : '', ...st(a), ...st(b)]);
+    }
+    const csv = '﻿' + rows.map(r => r.map(csvEscape).join(';')).join('\r\n');
+    return send(res, 200, csv, 'text/csv; charset=utf-8', { 'Content-Disposition': 'attachment; filename="matches.csv"' });
+  }
+
+  // backup / restore
+  if (p === '/api/backup' && m === 'GET') {
+    return send(res, 200, JSON.stringify({ app: 'piramida-tablo', at: Date.now(), data: mem }), 'application/json; charset=utf-8',
+      { 'Content-Disposition': `attachment; filename="tablo-backup-${new Date().toISOString().slice(0, 10)}.json"` });
+  }
+  if (p === '/api/restore' && m === 'POST') {
+    const b = await readBody(req);
+    if (!b || b.app !== 'piramida-tablo' || typeof b.data !== 'object') return json(res, { error: 'Это не файл резервной копии табло' }, 400);
+    for (const k of Object.keys(mem)) if (!(k in b.data)) del(k);
+    for (const [k, v] of Object.entries(b.data)) set(k, v);
+    live.clear(); return json(res, { ok: true });
+  }
+  json(res, { error: 'not found' }, 404);
+}
+
+const server = http.createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url, 'http://x');
+    const p = url.pathname;
+    if (p === '/health') return send(res, 200, 'ok', 'text/plain');
+    if (p.startsWith('/api/')) return await api(req, res, url);
+    let mm;
+    if ((mm = /^\/photos\/([\w-]+)\.jpg$/.exec(p))) {
+      const ph = get('photo:' + mm[1]); if (!ph) return send(res, 404, 'Not found', 'text/plain');
+      res.writeHead(200, { 'Content-Type': 'image/' + ph.t, 'Cache-Control': 'public, max-age=31536000, immutable' });
+      return res.end(Buffer.from(ph.b, 'base64'));
+    }
+    if (p.startsWith('/fonts/') || p.startsWith('/js/')) return serveFile(res, p, true);
+    if (p === '/login') return serveFile(res, 'login.html');
+    if ((mm = /^\/o\/([\w-]+)$/.exec(p))) return serveFile(res, 'control.html');
+    if ((mm = /^\/t\/([\w-]+)$/.exec(p))) {
+      if (!authed(req)) return send(res, 302, '', 'text/plain', { Location: '/login?next=' + encodeURIComponent(p) });
+      return serveFile(res, 'control.html');
+    }
+    if (p === '/') {
+      if (!authed(req)) return send(res, 302, '', 'text/plain', { Location: '/login' });
+      return serveFile(res, 'dashboard.html');
+    }
+    send(res, 404, 'Not found', 'text/plain');
+  } catch (e) {
+    console.error(e);
+    if (!res.headersSent) json(res, { error: 'Ошибка сервера' }, 500);
+  }
+});
+
+/* ===================== WebSocket ===================== */
+const clients = new Set();
+const wss = new WebSocketServer({ noServer: true, maxPayload: 2 * 1024 * 1024 });
+server.on('upgrade', (req, socket, head) => {
+  const url = new URL(req.url, 'http://x');
+  if (url.pathname !== '/ws') return socket.destroy();
+  const id = url.searchParams.get('table') || '';
+  if (!tableById(id)) return socket.destroy();
+  wss.handleUpgrade(req, socket, head, ws => {
+    ws.table = id; ws.canWrite = authed(req); ws.alive = true;
+    clients.add(ws);
+    ws.send(JSON.stringify(snapshot(id)));
+    ws.on('pong', () => ws.alive = true);
+    ws.on('message', raw => {
+      let m; try { m = JSON.parse(raw); } catch (e) { return; }
+      if (m.type === 'ping') return ws.send('{"type":"pong"}');
+      if (m.type === 'state' && ws.canWrite && m.state) {
+        const rev = putState(id, m.state, m.el, ws);
+        ws.send(JSON.stringify({ type: 'ack', rev }));
+      }
+    });
+    ws.on('close', () => clients.delete(ws));
+    ws.on('error', () => clients.delete(ws));
+  });
+});
+setInterval(() => { for (const c of clients) { if (!c.alive) { c.terminate(); clients.delete(c); continue; } c.alive = false; try { c.ping(); } catch (e) {} } }, 25000);
+
+store.ready.then(() => {
+  if (!get('tables', []).length) set('tables', [{ id: 'stol1', name: 'Стол 1', createdAt: Date.now() }]);
+  server.listen(PORT, '0.0.0.0', () => console.log(`Табло запущено на порту ${PORT}, хранилище: ${store.kind}${process.env.ADMIN_PASSWORD ? '' : ' (ВНИМАНИЕ: пароль по умолчанию «admin» — задайте ADMIN_PASSWORD)'}`));
+}).catch(e => { console.error('Не удалось подключиться к хранилищу:', e); process.exit(1); });
+
+const bye = async () => { try { await store.flush(); } catch (e) {} process.exit(0); };
+process.on('SIGTERM', bye); process.on('SIGINT', bye);
