@@ -334,6 +334,9 @@ async function api(req, res, url) {
       if (b.note != null) list[i].note = clean(b.note, 120);
       if (b.photo) { const old = list[i].photoId; const id = savePhoto(b.photo); if (id) { list[i].photoId = id; if (old) del('photo:' + old); } }
       if (b.photo === '') list[i].photoId = null;
+      // фото, уже загруженное на пульте, — привязать к профилю без повторной загрузки
+      if (b.photoRef && get('photo:' + b.photoRef)) list[i].photoId = String(b.photoRef);
+      if (b.bodyRef && get('photo:' + b.bodyRef)) list[i].bodyId = String(b.bodyRef);
       if (b.body) { const old = list[i].bodyId; const id = savePhoto(b.body); if (id) { list[i].bodyId = id; if (old) del('photo:' + old); } }
       if (b.body === '') list[i].bodyId = null;
       setInfo(list[i], b);
