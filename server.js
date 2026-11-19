@@ -418,6 +418,7 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith('/fonts/') || p.startsWith('/js/')) return serveFile(res, p, true);
     if (p === '/login') return serveFile(res, 'login.html');
     if ((mm = /^\/o\/([\w-]+)$/.exec(p))) return serveFile(res, 'control.html');
+    if ((mm = /^\/k\/([\w-]+)$/.exec(p))) return serveFile(res, 'control.html'); // экран комментатора (только просмотр)
     if ((mm = /^\/t\/([\w-]+)$/.exec(p))) {
       if (!authed(req)) return send(res, 302, '', 'text/plain', { Location: '/login?next=' + encodeURIComponent(p) });
       return serveFile(res, 'control.html');

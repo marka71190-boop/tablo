@@ -281,6 +281,40 @@ body.overlay #panel{display:none}
 #ovWrap{display:none;position:fixed;inset:0;align-items:center;justify-content:center;overflow:hidden}
 body.overlay #ovWrap{display:flex}
 
+/* ============ ЭКРАН КОММЕНТАТОРА (/k/<стол>) — не для эфира ============ */
+#comm{display:none}
+body.comm #ovWrap,body.comm #panel,body.comm #cmp{display:none!important}
+body.comm{background:#070b16;overflow:auto}
+body.comm #comm{display:block;max-width:1400px;margin:0 auto;padding:14px}
+.cm-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.cm-top h1{font:600 22px Oswald;text-transform:uppercase;letter-spacing:2px;color:#c9a14a}
+.cm-top .air{font-size:14px;color:#aab4cb}.cm-top .air b{color:#fff;background:#d7192f;border-radius:6px;padding:2px 8px;margin-left:6px}
+.cm-sc{display:grid;grid-template-columns:1fr 220px 1fr;gap:10px}
+.cm-p{background:#0e1527;border:2px solid #1d2742;border-radius:14px;padding:12px 16px;min-width:0}
+.cm-p.on{border-color:#c9a14a;background:#1f1a0c}
+.cm-p .n{display:flex;align-items:center;gap:10px;font:600 26px Oswald;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm-p .n .flag{width:40px;height:26px;flex:none}
+.cm-p .sc{font:700 84px/1 Oswald;color:#fff;margin-top:4px}.cm-p .sc small{font:500 20px 'Roboto Condensed';color:#aab4cb;margin-left:8px}
+.cm-p .ln{font-size:16px;color:#aab4cb;margin-top:6px;line-height:1.5}.cm-p .ln b{color:#fff}.cm-p .ln .g{color:#c9a14a;font-weight:700}
+.cm-p.r{text-align:right}.cm-p.r .n{justify-content:flex-end}
+.cm-c{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#0e1527;border:1px solid #1d2742;border-radius:14px;padding:10px}
+.cm-c .sh{font:700 64px/1 Oswald;font-variant-numeric:tabular-nums}.cm-c .sh.warn{color:#facc15}.cm-c .sh.crit{color:#ef4444}.cm-c .sh.paused{opacity:.45}
+.cm-c .l{font-size:13px;color:#8590aa;text-transform:uppercase;letter-spacing:1px}
+.cm-c .mt{font:600 26px Oswald;font-variant-numeric:tabular-nums}
+.cm-c .race{font:600 16px Oswald;color:#c9a14a;text-transform:uppercase;letter-spacing:1px;text-align:center}
+.cm-g{display:grid;grid-template-columns:1.2fr 1fr;gap:10px;margin-top:10px}
+.cm-box{background:#0e1527;border:1px solid #1d2742;border-radius:14px;padding:12px 14px;min-width:0}
+.cm-box h3{font:600 16px Oswald;text-transform:uppercase;letter-spacing:1px;color:#c9a14a;margin-bottom:8px}
+.cm-t{width:100%;border-collapse:collapse;font-size:17px}
+.cm-t td{padding:5px 6px;border-top:1px solid #141d33}.cm-t tr:first-child td{border-top:0}
+.cm-t td.a,.cm-t td.b{font:600 20px Oswald;width:26%;white-space:nowrap}.cm-t td.a{text-align:right}.cm-t td.k{text-align:center;color:#aab4cb;font-size:15px}
+.cm-t td.lead{color:#c9a14a}
+.cm-log div{display:grid;grid-template-columns:44px 64px 1fr;gap:8px;padding:4px 0;border-top:1px solid #141d33;font-size:15px}
+.cm-log div:first-child{border-top:0}.cm-log .t{color:#8590aa;font-variant-numeric:tabular-nums}.cm-log .f{color:#c9a14a}
+.cm-fh{display:flex;flex-wrap:wrap;gap:8px}.cm-fh span{background:#141d33;border-radius:8px;padding:6px 10px;font:600 18px Oswald}.cm-fh small{display:block;font:400 11px 'Roboto Condensed';color:#8590aa}
+.cm-fh .w{color:#c9a14a}
+@media(max-width:900px){.cm-sc{grid-template-columns:1fr 1fr}.cm-c{grid-column:span 2;order:-1;flex-direction:row;flex-wrap:wrap;gap:14px}.cm-g{grid-template-columns:1fr}.cm-p .sc{font-size:60px}}
+
 /* ============ CONTROL PANEL ============ */
 #panel{max-width:1180px;margin:0 auto;padding:14px 14px 60px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
@@ -418,6 +452,9 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
 .c-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:8px;min-height:0}
 .c-grid .ab{min-height:0;height:100%;font-size:21px;border-radius:14px}
 .c-grid .ab small{font-size:14px}
+.c-dlg{display:none;position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.7);place-items:center;padding:20px}
+.c-dlg>div{display:grid;gap:12px;width:100%;max-width:420px;background:#0e1527;border:1px solid #c9a14a;border-radius:16px;padding:18px}
+.c-dlg b{font:600 20px Oswald;text-transform:uppercase;text-align:center}.c-dlg .ab{min-height:70px;font-size:20px;grid-column:auto}
 .c-bot{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .c-bot button{min-height:54px;border-radius:12px;border:1px solid #26314f;background:#141d33;color:#e9edf5;font:600 15px 'Roboto Condensed';text-transform:uppercase}
 .c-bot button.ext{border-color:#c9a14a;color:#f1d58a;background:#2c2510}
@@ -434,6 +471,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
 <body>
 
 <div id="ovWrap"></div>
+<div id="comm"></div>
 <div id="cmp">
   <div class="c-top"><button class="modebtn" id="toFull">☰ Полный</button><select id="cScr"></select><span class="net" id="net2">…</span></div>
   <div class="c-game"><button data-game="classic">По партиям</button><button data-game="long">Длинная свободная</button><label>до<input id="cRace" type="number" min="1" max="999"></label></div>
@@ -447,6 +485,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
     <button class="ab saf" data-ca="safety">Отыгрыш<small>ход сопернику</small></button>
     <button class="ab foul" data-ca="foul">Штраф<small>ход сопернику</small></button>
   </div>
+  <div id="cRackDlg" class="c-dlg"><div><b>Разбой — какая пирамида?</b><button class="ab frame" data-crk="full">Полная</button><button class="ab frame" data-crk="cut">Усечённая</button><button class="ab miss" data-crk="x">Отмена</button></div></div>
   <div class="c-bot"><button id="cUndo">↶ Назад</button><button id="cPause">⏸ Таймер</button><button class="ext" id="cExt">+30</button><button id="cFrame">+ Партия</button></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -461,6 +500,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
     <div class="hd2"><span><a href="/" class="back">← Все столы</a> · <b id="tblName" style="color:#fff"></b></span><span class="net" id="net">Подключение…</span></div>
     <div class="lk"><span>Ссылка для OBS — источник «Браузер», 3840×2160 (4K)</span><input readonly id="obsUrl"><button class="sm" data-copy="obsUrl">Копировать</button></div>
     <div class="lk"><span>Мини-счёт для бокового ракурса — отдельный источник «Браузер» в сцене боковой камеры (всегда маленький счёт)</span><input readonly id="obsSide"><button class="sm" data-copy="obsSide">Копировать</button></div>
+    <div class="lk"><span>Экран комментатора — открыть на ноутбуке/планшете комментатора, в эфир не выводится</span><input readonly id="commUrl"><button class="sm" data-copy="commUrl">Копировать</button></div>
     <div class="lk" style="grid-template-columns:auto 1fr"><span>Угол мини-счёта</span><select id="fSidePos" style="background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:8px"><option value="tl">Слева сверху</option><option value="tr">Справа сверху</option><option value="bl">Слева снизу</option><option value="br">Справа снизу</option></select></div>
   </div>
 
@@ -469,7 +509,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
     <button data-game="long">Длинная свободная пирамида<small>каждый шар — очко, штраф — очко сопернику</small></button>
     <label><span id="lRace2">Матч до (побед)</span><input id="fRace2" type="number" min="1" max="999"></label>
   </div>
-  <div class="bar2" style="margin-top:-4px"><label class="chk" style="font-size:16px"><input type="checkbox" id="fPairs"> <b>Парная игра (2 на 2)</b> — игроки пары бьют строго по очереди</label></div>
+  <div class="bar2" style="margin-top:-4px"><label class="chk" id="wFirstKind" style="font-size:16px">Первая пирамида:<select id="fFirstKind" style="background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:6px"><option value="full">полная</option><option value="cut">усечённая</option></select></label><label class="chk" style="font-size:16px"><input type="checkbox" id="fPairs"> <b>Парная игра (2 на 2)</b> — игроки пары бьют строго по очереди</label></div>
 
   <div class="pv" id="pv"></div>
 
@@ -672,7 +712,8 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
 <script>
 const SEG=location.pathname.split('/');
 const TABLE=(SEG[2]||'').replace(/[^\w-]/g,'');
-const isOverlay=()=>SEG[1]==='o';
+const isOverlay=()=>SEG[1]==='o'||SEG[1]==='k'; // табло и экран комментатора — только просмотр
+const isComm=()=>SEG[1]==='k';
 const QS=new URLSearchParams(location.search);
 const VIEW=isOverlay()?(QS.get('v')||''):'';                               // ?v=side — мини-счёт для бокового ракурса
 const VIEW_POS=['tl','tr','bl','br'].includes(QS.get('pos'))?QS.get('pos'):''; // угол: tl, tr, bl, br
@@ -685,13 +726,13 @@ const DEFCFG=()=>({v:2,stats:STAT_ALL.map(id=>({id,on:STAT_ON0.includes(id),labe
   photos:true,flags:true,title:true,timer:true,mclock:true,balls:true,acc:'#c9a14a',logo:'',sponsors:[],spInt:8,spBug:true,
   tkOn:false,tk:'',tkLabel:'Новости',tkSpeed:110,people:[],ltDur:6,
   pTitle:'Перерыв',pSub:'Продолжение через',pEnd:'Скоро продолжим',pBg:'',pBgKind:'',pScore:true,pSpons:true,
-  winTitle:'Победитель матча',wt2:true,autoWin:true,fhist:true,brFrom:0,brSide:'all',brPage:0,sidePos:'tl',spLight:true});
+  winTitle:'Победитель матча',wt2:true,autoWin:false,aw2:true,fhist:true,brFrom:0,brSide:'all',brPage:0,sidePos:'tl',spLight:true});
 const newFs=(players,at)=>({base:players.map(counters),at:at||0,best:[0,0],brk:null,sc:players.map(p=>p.frames||0)});
 const DEF=()=>({cfg:null,title:'Кубок клуба',subtitle:'Финал',raceTo:5,ballsTo:8,screen:'bug',bg:'transparent',
   players:[blankP('Игрок 1'),blankP('Игрок 2')],turn:0,series:0,
   clock:{running:true,start:Date.now(),acc:0},shotExt:0,mclock:{running:false,start:Date.now(),acc:0},
   shot:{mode:'down',limit:45,ext:30,extN:1},fs:null,lastFrame:null,updatedAt:0,
-  game:'classic',foulBall:false,pairs:false,sub:[0,0],
+  game:'classic',foulBall:false,pairs:false,sub:[0,0],firstKind:'full',rk:'full',
   log:[],base0:null,frameLog:[],pclock:{running:false,start:Date.now(),acc:0},pdur:300000,lt:null,fhPop:null,win:null,winShown:false});
 const clone=o=>JSON.parse(JSON.stringify(o));
 function norm(s){
@@ -706,6 +747,7 @@ function norm(s){
     const kf=L.findIndex(x=>x.id==='safFail'), ks=L.findIndex(x=>x.id==='saf'); if(kf>=0&&ks>=0&&kf!==ks+1){ const [it]=L.splice(kf,1); L.splice(L.findIndex(x=>x.id==='saf')+1,0,it); }
     o.cfg.sf1=true; }
   if(!o.cfg.wt3&&/турнир/i.test(o.cfg.winTitle||'')){ o.cfg.winTitle='Победитель матча'; } o.cfg.wt3=true;
+  if(!o.cfg.aw2){ o.cfg.autoWin=false; o.cfg.aw2=true; } // экран победителя — только вручную
   if(!o.cfg.wt2){ if(!o.cfg.winTitle||o.cfg.winTitle==='Победитель турнира') o.cfg.winTitle='Победитель матча'; o.cfg.wt2=true; } // старая надпись по умолчанию
   o.shot=Object.assign(DEF().shot,s.shot||{});
   o.players=[0,1].map(i=>{const p=Object.assign(blankP('Игрок '+(i+1)),(s.players||[])[i]||{}); p.info=p.info||{}; return p});
@@ -814,7 +856,7 @@ function shotInfo(){
 
 /* ---- журнал действий: весь матч пересчитывается из списка событий ---- */
 const SHOTS=['foreign','own','luck','miss','safety','foul'];
-const EVN={sub:'Смена игрока пары',foreign:'Чужой',own:'Свой',luck:'Случайный',miss:'Промах',safety:'Отыгрыш',foul:'Штраф','frame+':'+ Партия','frame-':'− Партия','ball+':'Шар +1','ball-':'Шар −1',ext:'Продление',turn:'Передача хода',reset:'Сброс статистики',rack:'Разбой (новая стойка)'};
+const EVN={sub:'Смена игрока пары',foreign:'Чужой',own:'Свой',luck:'Случайный',miss:'Промах',safety:'Отыгрыш',foul:'Штраф','frame+':'+ Партия','frame-':'− Партия','ball+':'Шар +1','ball-':'Шар −1',ext:'Продление',turn:'Передача хода',reset:'Сброс статистики',rack:'Разбой (новая пирамида)'};
 function zeroBase(){return {pl:[0,1].map(()=>Object.assign(counters({}),{frames:0,balls:0,best:0,extUsed:0})),turn:0,at:0}}
 function endFrameS(X,w,mt){
   const [A,B]=X.players, dur=Math.max(0,mt-X.fs.at);
@@ -859,8 +901,8 @@ function applyEv(X,e){
   else if(t==='sub'){ X.vis[i]=(X.vis[i]??0)+1; X.sub[i]=1-(X.sub[i]||0); }
   else if(t==='rack'){ // длинная пирамида: пирамиду собрали заново — новая стойка, следующий удар считается разбоем
     const [A,B]=X.players, sc=X.fs.sc||[0,0], pa=A.frames-sc[0], pb=B.frames-sc[1], dur=Math.max(0,(e.mt||0)-X.fs.at);
-    if(X.fs.brk||pa||pb){ X.lastFrame={n:X.rack||1,p:frameStats(X),dur,brk:X.fs.brk}; X.frameLog.push({w:pa>pb?0:pb>pa?1:-1,a:pa,b:pb,dur}); }
-    X.rack=(X.rack||1)+1; X.fs=newFs(X.players,e.mt||0); if(X.turn!==i) recvTurn(X,i); X.turn=i; X.series=0;
+    if(X.fs.brk||pa||pb){ X.lastFrame={n:X.rack||1,k:X.rk,p:frameStats(X),dur,brk:X.fs.brk}; X.frameLog.push({w:pa>pb?0:pb>pa?1:-1,a:pa,b:pb,dur,k:X.rk}); }
+    X.rack=(X.rack||1)+1; X.rk=e.k==='cut'?'cut':'full'; X.fs=newFs(X.players,e.mt||0); if(X.turn!==i) recvTurn(X,i); X.turn=i; X.series=0;
   }
   else if(t==='reset'){ X.players.forEach(q=>{CNT.forEach(k=>q[k]=0);q.best=0}); X.series=0; X.fs=newFs(X.players,e.mt||0); X.lastFrame=null; }
 }
@@ -868,12 +910,14 @@ function replay(X,cb){
   const b=X.base0||zeroBase();
   X.players.forEach((p,k)=>Object.assign(p,clone(b.pl[k])));
   X.turn=b.turn||0; X.series=0; X.frameLog=[]; X.lastFrame=null; X.fs=newFs(X.players,b.at||0); X.rack=1;
-  X.vis=[-1,-1]; X.vis[X.turn]=0; X.sub=[0,0]; X.lastSaf=null;
+  X.vis=[-1,-1]; X.vis[X.turn]=0; X.sub=[0,0]; X.lastSaf=null; X.rk=X.firstKind==='cut'?'cut':'full';
   X.log.forEach((e,k)=>{ if(cb) cb(e,k,X); applyEv(X,e); });
 }
+const KN={full:'полная',cut:'усечённая'};
+const pyrName=(n,k)=>`Пирамида ${n||1}${k==='cut'?' · усечённая':' · полная'}`;
 function ev(t,i,pre){
-  snap(); mStart(); if(pre) pre();
-  const e={t,i,mt:mel()}; if(SHOTS.includes(t)){ e.pr=elapsed(); e.bt=S.ballsTo; if(S.foulBall) e.fb=1; }
+  snap(); mStart();
+  const e={t,i,mt:mel()}; if(t==='rack') e.k=pre==='cut'?'cut':'full'; if(typeof pre!=='function') pre=null; if(pre) pre(); if(SHOTS.includes(t)){ e.pr=elapsed(); e.bt=S.ballsTo; if(S.foulBall) e.fb=1; }
   if(S.game==='long') e.lg=1;
   const fl0=S.frameLog.length;
   S.log.push(e); applyEv(S,e);
@@ -1042,7 +1086,7 @@ function statRows(Q,isFrame){
   });
 }
 function statCard(kind){
-  const [A,B]=S.players; const isF=kind==='frame', unit=isLong()?'стойки':'партии';
+  const [A,B]=S.players; const isF=kind==='frame', unit=isLong()?'пирамиды':'партии';
   let Q, clk, label;
   if(isF){
     const cur=frameStats(); const empty=!cur[0].shots&&!cur[1].shots;
@@ -1096,7 +1140,7 @@ function fhVis(r){ const fh=r.querySelector('[data-k="fh"]'); if(!fh) return;
 function fhHTML(c){
   const L=S.frameLog||[], prev=c._prev.fhn; c._prev.fhn=L.length;
   if(isLong()){ const f=L[L.length-1]; if(!f) return '';
-    return `<div class="fh"><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }
+    return `<div class="fh"><small>пирамида ${L.length}${f.k==='cut'?' · усеч.':''}</small><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }
   return L.slice(-7).map((f,k,arr)=>{ const n=L.length-arr.length+k+1, isNew=prev!==undefined&&L.length>prev&&k===arr.length-1;
     return `<div class="fh${isNew?' new':''}"><small>${n}</small><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }).join('');
 }
@@ -1237,7 +1281,7 @@ function updSide(c){
     setNum(c,'sdS'+k,'sdS'+k,p.frames);
     c.querySelector(`[data-k="sdS${k}"]`).classList.toggle('w3',p.frames>99);
   });
-  setK(c,'sdI',w>=0?'Матч завершён':(isLong()?'':`Партия ${A.frames+B.frames+1} · `)+(C.mclock?'<span data-mc></span>':''));
+  setK(c,'sdI',w>=0?'Матч завершён':(isLong()?`Пирамида ${S.rack||1}${S.rk==='cut'?' · усеч.':''} · `:`Партия ${A.frames+B.frames+1} · `)+(C.mclock?'<span data-mc></span>':''));
 }
 function updateStage(c,first){
   if(!c.querySelector('.stage')){ c.innerHTML=skeleton(); c._prev={}; first=true; }
@@ -1251,7 +1295,7 @@ function updateStage(c,first){
   // bug
   setK(c,'lg',C.logo?`<img src="${esc(C.logo)}" alt="">`:'');
   setK(c,'tt',C.title?`<b>${esc(S.title)}</b>${S.subtitle?`<span>${esc(S.subtitle)}</span>`:''}<span>· ${esc(racePhrase())}</span>`:`<b>${esc(racePhrase())}</b>`);
-  setK(c,'fn',winner()>=0?'Матч завершён':isLong()?'':`Партия ${A.frames+B.frames+1}`);
+  setK(c,'fn',winner()>=0?'Матч завершён':isLong()?pyrName(S.rack,S.rk):`Партия ${A.frames+B.frames+1}`);
   c.querySelectorAll('.fr').forEach(e=>e.classList.toggle('w3',Math.max(A.frames,B.frames)>99));
   setK(c,'picA',picHTML(A,'a')); setK(c,'picB',picHTML(B,'b'));
   setK(c,'nmA',nameHTML(0)); setK(c,'nmB',nameHTML(1));
@@ -1335,7 +1379,7 @@ function panelCol(i){
       <button class="ab saf" data-a="safety" data-i="${i}">Отыгрыш<small>ход сопернику</small></button>
       ${isPair()?`<button class="ab miss" style="grid-column:span 3;min-height:42px" data-sub="${i}">⇄ Сменить игрока пары (сейчас бьёт ${esc(surn(curM(i)?p.name2:p.name))})</button>`:''}
       <button class="ab foul" data-a="foul" data-i="${i}">Штраф<small>${isLong()||S.foulBall?'+1 сопернику, ход ему':'ход сопернику'}</small></button>
-      ${isLong()?`<div class="fix"><button class="ab miss" data-f="-1" data-i="${i}">Очко −1</button><button class="ab miss" data-f="1" data-i="${i}">Очко +1</button><span></span></div><button class="ab frame" data-rack="${i}">Разбой<small>${S.fs.brk?'собрали пирамиду — разбивает '+esc(short(p.name)):'следующий удар — разбой'}</small></button>`
+      ${isLong()?`<div class="fix"><button class="ab miss" data-f="-1" data-i="${i}">Очко −1</button><button class="ab miss" data-f="1" data-i="${i}">Очко +1</button><span></span></div><button class="ab frame" style="grid-column:auto" data-rack="${i}" data-rk="full">Разбой: полная<small>разбивает ${esc(surn(p.name))}</small></button><button class="ab frame" style="grid-column:auto" data-rack="${i}" data-rk="cut">Разбой: усечённая<small>разбивает ${esc(surn(p.name))}</small></button>`
       :`<div class="fix"><button class="ab miss" data-b="-1" data-i="${i}">Шар −1</button><button class="ab miss" data-b="1" data-i="${i}">Шар +1</button><button class="ab miss" data-f="-1" data-i="${i}">Партия −1</button></div>
       <button class="ab frame" data-f="1" data-i="${i}">+ Партия</button>`}
       ${extBtn}
@@ -1370,9 +1414,10 @@ function syncFields(force){
   set('fTitle',S.title); set('fSub',S.subtitle); set('fRace',S.raceTo); set('fBallsTo',S.ballsTo); set('fGame',S.game);
   $('fFoulBall').checked=S.foulBall; $('lRace').textContent=isLong()?'Играем до (очков)':'Матч до (побед в партиях)';
   $('wBallsTo').style.display=isLong()?'none':''; $('wFoulBall').style.display=isLong()?'none':'';
-  document.querySelectorAll('#scrSeg [data-v=frame]').forEach(b=>b.textContent=isLong()?'Стойка':'Партия');
+  document.querySelectorAll('#scrSeg [data-v=frame]').forEach(b=>b.textContent=isLong()?'Пирамида':'Партия');
   set('fShotMode',S.shot.mode); set('fLimit',S.shot.limit); set('fExt',S.shot.ext); set('fExtN',S.shot.extN); set('fSpInt',S.cfg.spInt);
   set('fNameA',S.players[0].name); set('fNameB',S.players[1].name);
+  set('fFirstKind',S.firstKind||'full'); $('wFirstKind').style.display=isLong()?'':'none';
   set('fNameA2',S.players[0].name2); set('fNameB2',S.players[1].name2); $('fPairs').checked=isPair();
   document.querySelectorAll('.pairf').forEach(e=>e.style.display=isPair()?'':'none');
   ['thA2','thB2'].forEach((id,i)=>$(id).style.backgroundImage=S.players[i].photo2?`url('${S.players[i].photo2}')`:'');
@@ -1383,7 +1428,38 @@ function syncFields(force){
   const bg=(id,u)=>$(id).style.backgroundImage=u?`url('${u}')`:'';
   bg('thA',S.players[0].photo); bg('thB',S.players[1].photo); bg('bdA',S.players[0].body); bg('bdB',S.players[1].body);
 }
+const SCR_NAME={bug:'Счёт',vs:'VS',frame:'Партия',match:'Встреча',bracket:'Сетка',break:'Перерыв',winner:'Победитель',spons:'Спонсоры',side:'Мини-счёт',hidden:'Скрыто'};
+function renderComm(){
+  const el=$('comm'), [A,B]=S.players, w=winner(), L=isLong();
+  const cur=frameStats(), M=matchStats(), ids=STAT_ALL.filter(id=>!(L&&id==='frames'));
+  const tbl=(Q,isF)=>`<table class="cm-t">${ids.map(id=>{ const d=STATDEF[id], f=d[1], fm=d[2], dir=d[3];
+      const a=f(Q[0],isF), b=f(Q[1],isF), sh=(v,q)=>fm?fm(v,q,isF):(v==null?'—':v);
+      const lead=dir&&a!=null&&b!=null&&a!==b?((dir>0?a>b:a<b)?0:1):null;
+      return `<tr><td class="a${lead===0?' lead':''}">${esc(sh(a,Q[0]))}</td><td class="k">${esc(d[0])}</td><td class="b${lead===1?' lead':''}">${esc(sh(b,Q[1]))}</td></tr>`; }).join('')}</table>`;
+  const who=i=>{ const p=S.players[i]; return isPair()&&p.name2?(curM(i)?p.name2:p.name):p.name; };
+  const card=(i)=>{ const p=S.players[i], on=S.turn===i&&w<0;
+    return `<div class="cm-p ${i?'r':''} ${on?'on':''}"><div class="n">${i?'':(S.cfg.flags?flag(p.country):'')}${esc(teamName(p,true))}${i&&S.cfg.flags?flag(p.country):''}</div>
+      <div class="sc">${p.frames}<small>${L?'из '+S.raceTo:(S.ballsTo>0?p.balls+' ш. в партии':'')}</small></div>
+      <div class="ln">${w===i?'<span class="g">ПОБЕДА</span><br>':''}${on?`<span class="g">● бьёт: ${esc(who(i))}${!S.fs.brk?' — разбой':''}${S.series>0?` · серия ${S.series}`:''}</span><br>`:''}
+        Лучшая серия <b>${p.best}</b> · Разбой <b>${p.breaksOk}/${p.breaks}</b> · Штраф <b>${p.fouls}</b>${L?` · штрафных получено <b>${p.fpts||0}</b>`:''}<br>
+        Отыгрыши <b>${p.safeties}</b>${p.safeties?` (неудачных <b>${p.safFail||0}</b>)`:''}${S.shot.mode==='down'&&S.shot.extN>0?` · продлений осталось <b>${Math.max(0,S.shot.extN-p.extUsed)}</b>`:''}</div></div>`; };
+  const fn=L?pyrName(S.rack,S.rk):`Партия ${A.frames+B.frames+1}`;
+  const X=clone(S), fr=[]; replay(X,(e,k,Y)=>fr[k]=L?(Y.rack||1):Y.players[0].frames+Y.players[1].frames+1);
+  const log=S.log.map((e,k)=>`<div><span class="f">${L?'П':'П'}${fr[k]}</span><span class="t">${fmtH(e.mt||0)}</span><span>${esc(surn(S.players[e.i]?S.players[e.i].name:''))} — ${esc(EVN[e.t]||e.t)}</span></div>`).slice(-25).reverse().join('');
+  const fh=(S.frameLog||[]).map((f,k)=>`<span><small>${L?'пирамида':'партия'} ${k+1}${f.k==='cut'?' · усеч.':''}</small><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span>`).join('');
+  const info=INFO.filter(([k])=>A.info[k]||B.info[k]).map(([k,l])=>`<tr><td class="a">${esc(A.info[k]||'—')}</td><td class="k">${l}</td><td class="b">${esc(B.info[k]||'—')}</td></tr>`).join('');
+  const lastF=S.lastFrame&&!cur[0].shots&&!cur[1].shots;
+  el.innerHTML=`<div class="cm-top"><h1>${esc(S.title)}${S.subtitle?' · '+esc(S.subtitle):''}</h1><span class="air">Экран комментатора — не в эфире · сейчас в эфире:<b>${esc(SCR_NAME[S.screen]||S.screen)}</b> <span class="net" id="net">Онлайн</span></span></div>
+    <div class="cm-sc">${card(0)}<div class="cm-c"><span class="l">${S.shot.mode==='up'?'подготовка':'на удар'}</span><span class="sh" data-cc></span><span class="l">время матча</span><span class="mt" data-mc></span><span class="race">${esc(racePhrase())}<br>${w>=0?'матч завершён':esc(fn)}</span></div>${card(1)}</div>
+    <div class="cm-g"><div class="cm-box"><h3>Статистика встречи</h3>${tbl(M,false)}</div>
+      <div><div class="cm-box"><h3>${lastF?`Прошлая ${L?'пирамида':'партия'} (${S.lastFrame.n})`:`Текущая ${L?'пирамида':'партия'}`}</h3>${tbl(lastF?S.lastFrame.p:cur,true)}</div>
+      ${fh?`<div class="cm-box" style="margin-top:10px"><h3>${L?'Пирамиды':'Партии'}: счёт</h3><div class="cm-fh">${fh}</div></div>`:''}
+      ${info?`<div class="cm-box" style="margin-top:10px"><h3>Анкета</h3><table class="cm-t">${info}</table></div>`:''}
+      <div class="cm-box cm-log" style="margin-top:10px"><h3>Последние действия</h3>${log||'<span style="color:#8590aa">Пока ничего</span>'}</div></div></div>`;
+  tick();
+}
 function renderAll(external){
+  if(isComm()){ renderComm(); return; }
   if(isOverlay()){ updateStage($('ovWrap')); return; }
   updateStage($('pv'));
   $('pcols').innerHTML=panelCol(0)+panelCol(1);
@@ -1404,7 +1480,7 @@ function renderAll(external){
 }
 function setupLinks(){
   const ov=location.origin+'/o/'+TABLE;
-  $('obsUrl').value=ov; $('openOv').href=ov; $('obsSide').value=ov+'?v=side';
+  $('obsUrl').value=ov; $('openOv').href=ov; $('obsSide').value=ov+'?v=side'; $('commUrl').value=location.origin+'/k/'+TABLE;
   fetch('/api/table/'+TABLE).then(r=>r.json()).then(t=>{ if(t&&t.name){ $('tblName').textContent=t.name; document.title='Пульт · '+t.name; } }).catch(()=>{});
   const opts=Object.entries(FLAGS).map(([k,[n]])=>`<option value="${k}">${n}</option>`).join('');
   $('fCtA').innerHTML=opts; $('fCtB').innerHTML=opts;
@@ -1444,7 +1520,8 @@ function alertShot(sh){
 function tick(only){
   if(!S) return;
   const mt=fmtH(mel()), ft=fmtH(mel()-S.fs.at), sh=shotInfo(), paused=!S.clock.running;
-  const roots=only?[only]:[isOverlay()?$('ovWrap'):$('pv')];
+  if(isComm()){ document.querySelectorAll('[data-cc]').forEach(e=>{ e.textContent=sh.txt; e.className='sh'+(paused?' paused':'')+(!sh.up&&sh.secs<=10?' crit':(!sh.up&&sh.frac<=.5?' warn':'')); }); }
+  const roots=only?[only]:[isComm()?$('comm'):isOverlay()?$('ovWrap'):$('pv')];
   const spN=(S.cfg.sponsors||[]).length, spI=spN?Math.floor(Date.now()/(Math.max(3,S.cfg.spInt)*1000))%spN:-1;
   for(const r of roots){ if(!r) continue;
     r.querySelectorAll('[data-mc]').forEach(e=>e.textContent=mt);
@@ -1490,7 +1567,7 @@ document.addEventListener('click',e=>{
   else if(b.dataset.b) ball(+b.dataset.i,+b.dataset.b);
   else if(b.dataset.ext!=null) extend(+b.dataset.ext);
   else if(b.dataset.sub!=null) ev('sub',+b.dataset.sub);
-  else if(b.dataset.rack!=null){ ev('rack',+b.dataset.rack); toast('Новая стойка '+S.rack+': разбивает '+S.players[+b.dataset.rack].name); }
+  else if(b.dataset.rack!=null){ ev('rack',+b.dataset.rack,b.dataset.rk); toast(pyrName(S.rack,S.rk)+': разбивает '+S.players[+b.dataset.rack].name); }
   else if(b.dataset.up!=null||b.dataset.dn!=null){ const i=+(b.dataset.up??b.dataset.dn), j=b.dataset.up!=null?i-1:i+1, L=S.cfg.stats; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; save(); renderCfg(true); }
   else if(b.dataset.clr!=null){snap();S.players[+b.dataset.clr][b.dataset.kind]='';save();}
   else if(b.dataset.sprm!=null){snap();S.cfg.sponsors.splice(+b.dataset.sprm,1);save();renderCfg(true);}
@@ -1551,6 +1628,7 @@ bind('fExtN',v=>S.shot.extN=Math.max(0,Math.min(10,parseInt(v)||0)));
 bind('fSpInt',v=>S.cfg.spInt=Math.max(3,parseInt(v)||8));
 bind('fNameA',v=>{S.players[0].name=v;S.players[0].playerId=null}); bind('fNameB',v=>{S.players[1].name=v;S.players[1].playerId=null});
 bind('fNameA2',v=>{S.players[0].name2=v;S.players[0].playerId2=null}); bind('fNameB2',v=>{S.players[1].name2=v;S.players[1].playerId2=null});
+$('fFirstKind').onchange=e=>{ snap(); S.firstKind=e.target.value; replay(S); save(); };
 $('fPairs').onchange=e=>{ snap(); S.pairs=e.target.checked; replay(S); save(); toast(S.pairs?'Парная игра: впишите партнёров в «Настройках матча»':'Одиночная игра'); };
 ['pickA2','pickB2'].forEach((id,i)=>$(id).addEventListener('change',e=>{
   const pl=PLAYERS.find(p=>p.id===e.target.value); if(!pl) return;
@@ -1725,8 +1803,9 @@ $('cUndo').onclick=undo;
 $('cPause').onclick=()=>togglePause();
 $('cExt').onclick=()=>extend(S.turn);
 let cfArm=false;
-$('cFrame').onclick=e=>{ const b=e.currentTarget; if(!cfArm){ cfArm=true; b.textContent='Точно?'; setTimeout(()=>{cfArm=false;renderCompact()},2000); return; } cfArm=false;
-  if(isLong()){ ev('rack',S.turn); toast('Новая стойка '+S.rack+': разбивает '+S.players[S.turn].name); } else frame(S.turn,1); };
+$('cFrame').onclick=e=>{ const b=e.currentTarget; if(isLong()){ $('cRackDlg').style.display='grid'; return; } if(!cfArm){ cfArm=true; b.textContent='Точно?'; setTimeout(()=>{cfArm=false;renderCompact()},2000); return; } cfArm=false;
+  if(isLong()) $('cRackDlg').style.display='grid'; else frame(S.turn,1); };
+document.querySelectorAll('[data-crk]').forEach(b=>b.onclick=()=>{ $('cRackDlg').style.display='none'; if(b.dataset.crk==='x') return; ev('rack',S.turn,b.dataset.crk); toast(pyrName(S.rack,S.rk)+': разбивает '+S.players[S.turn].name); });
 function renderCompact(){
   if(!document.body.classList.contains('compact')) return;
   const cp=(i)=>{ const p=S.players[i]; const el=$(i?'cpB':'cpA'); el.classList.toggle('on',S.turn===i);
@@ -1740,7 +1819,7 @@ function renderCompact(){
   if(!cfArm) $('cFrame').textContent=isLong()?'Разбой':'+ Партия';
 }
 S=norm({});
-function route(){document.body.classList.toggle('overlay',isOverlay());renderAll(true)}
+function route(){document.body.classList.toggle('overlay',isOverlay()&&!isComm());document.body.classList.toggle('comm',isComm());if(isComm()) document.title='Комментатор · Табло';renderAll(true)}
 window.addEventListener('resize',()=>{fit(isOverlay()?$('ovWrap'):$('pv'))});
 if(!isOverlay()){ setupLinks(); loadPlayers(); loadBracket();
   let cm=null; try{ cm=localStorage.getItem(CMP_KEY) }catch(_){}
