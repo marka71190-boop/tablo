@@ -204,7 +204,8 @@ function cleanBracket(b) {
       ca: clean(m && m.ca, 3).toLowerCase(), cb: clean(m && m.cb, 3).toLowerCase(),
       sa: num(m && m.sa), sb: num(m && m.sb),
       ta: clean(m && m.ta, 4), tb: clean(m && m.tb, 4),           // «ТП» — техническое поражение
-      xa: !!(m && m.xa), xb: !!(m && m.xb),                       // «X» — пустое место (проход без игры)
+      xa: !!(m && m.xa), xb: !!(m && m.xb),
+      seedA: num(m && m.seedA), seedB: num(m && m.seedB),                       // «X» — пустое место (проход без игры)
       wTo: num(m && m.wTo), lTo: num(m && m.lTo),                 // куда идут победитель и проигравший (номер матча)
       table: clean(m && m.table, 30), time: clean(m && m.time, 30)
     }))
