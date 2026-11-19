@@ -316,6 +316,51 @@ body.comm #comm{display:block;max-width:1400px;margin:0 auto;padding:14px}
 .cm-fh .w{color:#c9a14a}
 @media(max-width:900px){.cm-sc{grid-template-columns:1fr 1fr}.cm-c{grid-column:span 2;order:-1;flex-direction:row;flex-wrap:wrap;gap:14px}.cm-g{grid-template-columns:1fr}.cm-p .sc{font-size:60px}}
 
+/* ---------- вставки (слайды) ---------- */
+@keyframes slUp{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
+@keyframes slGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes slImg{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:none}}
+.sld{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .8s ease}
+.on .sld{opacity:1}
+.sl{position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+.sl.cur{opacity:1}
+.sl-fr{position:absolute;left:44px;top:44px;right:44px;bottom:44px;border:1px solid rgba(201,161,74,.2);pointer-events:none;z-index:3}
+.sl-fr::before,.sl-fr::after{content:"";position:absolute;width:58px;height:58px;border:2px solid var(--g)}
+.sl-fr::before{left:-2px;top:-2px;border-right:0;border-bottom:0}.sl-fr::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+.sl-c{position:absolute;left:44px;right:44px;top:44px;bottom:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.sl .an{opacity:0}
+.on .sl.cur .an{animation:slUp 1s cubic-bezier(.16,1,.3,1) var(--d,0s) both}
+.sl-k{font:500 28px 'Roboto Condensed';letter-spacing:12px;color:var(--g);text-transform:uppercase;white-space:nowrap;max-width:1700px;overflow:hidden}
+.sl-t{font:600 210px/1 Oswald;color:#f1ead6;text-transform:uppercase;letter-spacing:4px;white-space:nowrap;max-width:1700px;overflow:hidden;margin-top:30px}
+.sl-t.m{font-size:110px;margin-top:22px}
+.sl-d{width:620px;height:2px;background:linear-gradient(90deg,transparent,var(--g),transparent);margin:40px 0 30px;transform:scaleX(0)}
+.on .sl.cur .sl-d{animation:slGrow 1.3s cubic-bezier(.65,0,.35,1) .6s both}
+.sl-s{font:300 34px 'Roboto Condensed';letter-spacing:4px;color:#d9d3c4;max-width:1500px}
+.sl-pl{font:500 20px 'Roboto Condensed';letter-spacing:10px;color:var(--g);text-transform:uppercase;margin-bottom:22px}
+.sl-lg{display:flex;align-items:center;justify-content:center}
+.sl-lg>span{display:flex;align-items:center;justify-content:center;padding:0 34px;height:var(--lh,86px)}
+.sl-lg>span+span{border-left:1px solid rgba(201,161,74,.35)}
+.sl-lg img{max-height:100%;max-width:var(--lw,260px);object-fit:contain}
+.sl-bot{position:absolute;left:0;right:0;bottom:84px;display:flex;flex-direction:column;align-items:center}
+.sl-ad{position:absolute;left:150px;top:44px;bottom:44px;width:980px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;text-align:left}
+.sl-ad .sl-k{font-size:24px;letter-spacing:9px;max-width:980px}
+.sl-ad .lgs{display:flex;align-items:center;gap:40px;margin-top:38px;height:170px}.sl-ad .lgs img{max-height:170px;max-width:340px;object-fit:contain}
+.sl-ad .x{font:300 44px 'Roboto Condensed';color:var(--g)}
+.sl-ad .tt2{font:600 76px/1.08 Oswald;color:#f1ead6;text-transform:uppercase;letter-spacing:2px;margin-top:34px;max-width:980px}
+.sl-ad .ac{font:600 76px/1.05 Oswald;color:var(--g);text-transform:none;letter-spacing:2px}
+.sl-ad .ds{font:300 30px 'Roboto Condensed';letter-spacing:3px;color:#d9d3c4;margin-top:26px}
+.sl-ad .qrw{display:flex;align-items:center;gap:30px;margin-top:40px}
+.sl-ad .qr{width:200px;height:200px;background:#fff;border-radius:16px;padding:12px;box-shadow:0 0 0 3px var(--g2)}.sl-ad .qr svg{width:100%;height:100%}
+.sl-ad .u{font:600 46px Oswald;color:var(--g);letter-spacing:1px}.sl-ad .h{font:300 24px 'Roboto Condensed';letter-spacing:3px;color:#d9d3c4;margin-top:8px}
+.sl-im{position:absolute;left:1160px;top:44px;right:44px;bottom:44px;overflow:hidden}
+.sl-im img{width:100%;height:100%;object-fit:cover}
+.on .sl.cur .sl-im img{animation:slImg 1.6s cubic-bezier(.16,1,.3,1) .2s both}
+.sl-im::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#000,transparent 22%);z-index:1}
+.slc{border:1px solid #26314f;border-radius:12px;padding:12px;margin-top:10px;background:#0b1222}
+.slc h4{display:flex;justify-content:space-between;align-items:center;gap:8px;font:600 16px Oswald;text-transform:uppercase;color:#c9a14a;margin-bottom:8px}
+.slc .fields{margin-top:0}
+.slc .imgs{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+
 /* индикатор подключённых экранов */
 .pres{display:flex;gap:6px;flex-wrap:wrap}
 .pres span{font-size:12px;padding:3px 8px;border-radius:20px;background:#141d33;color:#8590aa;border:1px solid #26314f}
@@ -562,6 +607,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
       <button data-v="side">Мини</button>
       <button data-v="chart">График</button>
       <button data-v="poll">Опрос</button>
+      <button data-v="slides">Вставки</button>
       <button data-v="hidden">Скрыть</button>
     </div>
   </div>
@@ -668,6 +714,14 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
     </div>
     <div class="lk"><span>Ссылка для зрителей (на экране будет QR-код с ней)</span><input readonly id="voteUrl"><button class="sm" data-copy="voteUrl">Копировать</button></div>
     <div class="hint">Зрители голосуют с телефона, один голос с устройства (можно передумать). Проценты обновляются в эфире сразу.</div>
+  </details>
+
+  <details class="card2 set" id="slBox">
+    <summary>Вставки: заставки, партнёры, реклама</summary>
+    <div class="bar2"><button class="btn2" data-sladd="title">+ Заставка</button><button class="btn2" data-sladd="partners">+ Партнёры</button><button class="btn2" data-sladd="ad">+ Реклама</button></div>
+    <div class="chks"><label class="chk"><input type="checkbox" data-cfg="slRot"> Показывать вставки по кругу</label><label class="chk">каждые <input id="fSlInt" type="number" min="4" max="300" style="width:70px;background:#070b16;border:1px solid #26314f;color:#fff;border-radius:6px;padding:6px"> сек</label></div>
+    <div id="slList"></div>
+    <div class="hint">Логотипы партнёров берутся из раздела «Логотип и спонсоры». Вставка закрывает весь экран чёрным фоном. Кнопка «Вставки» вверху показывает выбранную вставку (или все по кругу).</div>
   </details>
 
   <details class="card2 set" id="tplBox">
@@ -784,7 +838,7 @@ const DEFCFG=()=>({v:2,stats:STAT_ALL.map(id=>({id,on:STAT_ON0.includes(id),labe
   photos:true,flags:true,title:true,timer:true,mclock:true,balls:true,acc:'#c9a14a',logo:'',sponsors:[],spInt:8,spBug:true,
   tkOn:false,tk:'',tkLabel:'Новости',tkSpeed:110,people:[],ltDur:6,
   pTitle:'Перерыв',pSub:'Продолжение через',pEnd:'Скоро продолжим',pBg:'',pBgKind:'',pScore:true,pSpons:true,
-  winTitle:'Победитель матча',wt2:true,autoWin:false,aw2:true,fhist:true,brFrom:0,brSide:'all',brPage:0,sidePos:'tl',spLight:true});
+  winTitle:'Победитель матча',wt2:true,autoWin:false,aw2:true,fhist:true,brFrom:0,brSide:'all',brPage:0,sidePos:'tl',spLight:true,slides:[],slRot:false,slInt:12});
 const newFs=(players,at)=>({base:players.map(counters),at:at||0,best:[0,0],brk:null,sc:players.map(p=>p.frames||0)});
 const DEF=()=>({cfg:null,title:'Кубок клуба',subtitle:'Финал',raceTo:5,ballsTo:8,screen:'bug',bg:'transparent',
   players:[blankP('Игрок 1'),blankP('Игрок 2')],turn:0,series:0,
@@ -1101,6 +1155,7 @@ function skeleton(){
    </div></div>
    <div class="scr" data-s="bracket"><div class="brc"><div data-k="brHd"></div><div class="brw" data-k="brW"></div></div></div>
    <div class="scr" data-s="break"><div class="brk"><div class="brk-bg" data-k="pBg"></div><div class="brk-sh"></div><div class="brk-c" data-k="pC"></div><div class="brk-sp" data-k="pSp"></div></div></div>
+   <div class="scr" data-s="slides"><div class="sld" data-k="slC"></div></div>
    <div class="scr" data-s="poll"><div class="pollc" data-k="pollC"></div></div>
    <div class="scr" data-s="chart"><div class="chc" data-k="chC"></div></div>
    <div class="scr" data-s="winner"><div class="win"><canvas class="spark"></canvas><div class="win-ph" data-k="wPh"></div><div class="win-r" data-k="wR"></div></div></div>
@@ -1406,6 +1461,48 @@ function chartCard(){
     <div class="ch-l"><span><i style="background:var(--g)"></i>${esc(teamName(A))}<b style="color:var(--g)">${v(A)}</b></span><span><i style="background:#e9e1c8"></i>${esc(teamName(B))}<b>${v(B)}</b></span></div>
     ${chartSVG(1600,740,true)}`;
 }
+/* ---- вставки: заставка, партнёры, реклама ---- */
+const SL_TYPES={title:'Заставка',partners:'Партнёры',ad:'Реклама'};
+function slideHTML(sl){
+  const k=esc(sl.kicker||S.title||''), sp=(S.cfg.sponsors||[]);
+  const logos=(lh,lw,d)=>sp.length?`<div class="sl-lg an" style="--lh:${lh}px;--lw:${lw}px;--d:${d}s">${sp.map(u=>`<span><img src="${esc(u)}" alt=""></span>`).join('')}</div>`:'';
+  let body='';
+  if(sl.type==='partners'){
+    body=`<div class="sl-c"><div class="sl-k an fitt" style="--d:.2s">${k}</div><div class="sl-t m an fitt" style="--d:.4s">${esc(sl.title||'Партнёры турнира')}</div>
+      <div style="height:60px"></div>${logos(150,300,.8)}</div>`;
+  } else if(sl.type==='ad'){
+    const lg=[sl.logo1,sl.logo2].filter(Boolean);
+    body=`<div class="sl-ad"><div class="sl-k an fitt" style="--d:.2s">${k}</div>
+      ${lg.length?`<div class="lgs an" style="--d:.4s">${lg.map(u=>`<img src="${esc(u)}" alt="">`).join('<span class="x">×</span>')}</div>`:''}
+      ${sl.title?`<div class="tt2 an" style="--d:.6s">${esc(sl.title)}</div>`:''}${sl.accent?`<div class="ac an" style="--d:.7s">${esc(sl.accent)}</div>`:''}
+      ${sl.sub?`<div class="ds an" style="--d:.85s">${esc(sl.sub)}</div>`:''}
+      ${sl.url?`<div class="qrw an" style="--d:1s"><div class="qr" data-qr="${esc(/^https?:/i.test(sl.url)?sl.url:'https://'+sl.url)}"></div><div><div class="u">${esc(sl.url.replace(/^https?:\/\//i,''))}</div><div class="h">${esc(sl.hint||'Наведи камеру телефона на QR-код')}</div></div></div>`:''}</div>
+      ${sl.image?`<div class="sl-im"><img src="${esc(sl.image)}" alt=""></div>`:''}`;
+  } else {
+    body=`<div class="sl-c" style="${sl.partners&&sp.length?'padding-bottom:200px':''}"><div class="sl-k an fitt" style="--d:.2s">${k}</div><div class="sl-t an fitt" style="--d:.4s">${esc(sl.title||'Перерыв')}</div>
+      <div class="sl-d"></div>${sl.sub?`<div class="sl-s an" style="--d:.9s">${esc(sl.sub)}</div>`:''}</div>
+      ${sl.partners&&sp.length?`<div class="sl-bot"><div class="sl-pl an" style="--d:1.1s">Партнёры</div>${logos(86,200,1.25)}</div>`:''}`;
+  }
+  return `<div class="sl" data-sl="${esc(sl.id)}"><div class="sl-fr"></div>${body}</div>`;
+}
+function slidesHTML(){ const L=S.cfg.slides||[]; return L.length?L.map(slideHTML).join(''):''; }
+function slideCur(){ const L=S.cfg.slides||[]; if(!L.length) return null;
+  if(S.cfg.slRot&&L.length>1) return L[Math.floor(Date.now()/(Math.max(4,S.cfg.slInt||12)*1000))%L.length].id;
+  return (L.find(x=>x.id===S.slideId)||L[0]).id; }
+function renderSlidesPanel(force){
+  const box=$('slList'); if(!box) return;
+  if(!force&&box.contains(document.activeElement)) return;
+  const L=S.cfg.slides||[];
+  const inp=(i,f,ph,full)=>`<label class="${full?'full2':''}">${ph}<input data-sf="${i}:${f}" value="${esc(L[i][f]||'')}"></label>`;
+  const img=(i,f,l)=>`<label>${l}<span class="photo-in"><span class="th" style="background-color:#000;background-size:contain;${L[i][f]?`background-image:url('${esc(L[i][f])}')`:''}"></span><input type="file" accept="image/*" data-sfi="${i}:${f}"><button class="sm" data-sfc="${i}:${f}">✕</button></span></label>`;
+  box.innerHTML=L.map((sl,i)=>`<div class="slc"><h4><span>${i+1}. ${SL_TYPES[sl.type]||''}${sl.title?' — '+esc(sl.title):''}</span><span style="display:flex;gap:6px">
+      <button class="btn2" data-sls="${esc(sl.id)}">Показать в эфире</button><button class="sm" data-slu="${i}">↑</button><button class="sm" data-sld="${i}">↓</button><button class="sm" data-slx="${i}">✕</button></span></h4>
+    <div class="fields">${inp(i,'kicker','Надпись сверху (пусто — название турнира)',true)}${inp(i,'title',sl.type==='ad'?'Название (крупно)':'Заголовок')}
+      ${sl.type==='title'?inp(i,'sub','Подпись под чертой')+`<label class="chk" style="flex-direction:row;align-items:center;margin-top:18px"><input type="checkbox" data-sfb="${i}:partners" ${sl.partners?'checked':''}> Партнёры внизу</label>`:''}
+      ${sl.type==='ad'?inp(i,'accent','Акцент (золотом), например «0.98 ß»')+inp(i,'sub','Описание')+inp(i,'url','Сайт для QR-кода (kamui-collection.ru)')+inp(i,'hint','Подпись у QR-кода')+img(i,'logo1','Логотип 1')+img(i,'logo2','Логотип 2 (через «×»)')+img(i,'image','Фото справа'):''}
+    </div></div>`).join('')||'<span class="hint" style="margin:0">Вставок пока нет — добавьте заставку, партнёров или рекламу.</span>';
+}
+
 /* ---- шаблоны турниров ---- */
 let TPL=[];
 function loadTpl(){ fetch('/api/templates').then(r=>r.ok?r.json():[]).then(l=>{ TPL=l||[]; renderTpl(); }).catch(()=>{}); }
@@ -1455,9 +1552,10 @@ function updateStage(c,first){
   setK(c,'brW',bracketHTML());
   setK(c,'lt',S.lt?`<div class="lt-bar"></div><div class="lt-b"><div class="lt-n">${esc(S.lt.name)}</div>${S.lt.role?`<div class="lt-r">${esc(S.lt.role)}</div>`:''}</div>`:'');
   updSide(c);
-  setK(c,'pollC',pollHTML()); fillQR(c);
+  setK(c,'pollC',pollHTML());
+  setK(c,'slC',slidesHTML()); fillQR(c);
   setK(c,'chC',chartCard());
-  let scr=S.screen==='spons'&&!sp.length?'hidden':S.screen;
+  let scr=(S.screen==='spons'&&!sp.length)||(S.screen==='slides'&&!(C.slides||[]).length)?'hidden':S.screen;
   if(VIEW==='side') scr=S.screen==='hidden'?'hidden':'side'; // отдельная ссылка для бокового ракурса: всегда мини-счёт
   const tkOn=!!(C.tkOn&&['bug','break','bracket'].includes(scr));
   st.classList.toggle('tk',tkOn); updTicker(c,tkOn);
@@ -1558,13 +1656,13 @@ function syncFields(force){
   document.querySelectorAll('.pairf').forEach(e=>e.style.display=isPair()?'':'none');
   ['thA2','thB2'].forEach((id,i)=>$(id).style.backgroundImage=S.players[i].photo2?`url('${S.players[i].photo2}')`:'');
   set('fPDur',Math.round(S.pdur/6000)/10); set('fPTitle',S.cfg.pTitle); set('fPSub',S.cfg.pSub); set('fPEnd',S.cfg.pEnd);
-  set('fTkLabel',S.cfg.tkLabel); set('fTkSpeed',S.cfg.tkSpeed); set('fTk',S.cfg.tk); set('fLtDur',S.cfg.ltDur); set('fWinTitle',S.cfg.winTitle); set('fFhDur',S.cfg.fhDur||8);
+  set('fTkLabel',S.cfg.tkLabel); set('fTkSpeed',S.cfg.tkSpeed); set('fTk',S.cfg.tk); set('fLtDur',S.cfg.ltDur); set('fWinTitle',S.cfg.winTitle); set('fSlInt',S.cfg.slInt||12); set('fFhDur',S.cfg.fhDur||8);
   const pb=$('thPBg'); if(pb){ pb.style.backgroundImage=S.cfg.pBg&&S.cfg.pBgKind!=='video'?`url('${S.cfg.pBg}')`:''; pb.textContent=S.cfg.pBgKind==='video'?'🎬':''; pb.style.display='grid'; pb.style.placeItems='center'; }
   set('fCtA',S.players[0].country); set('fCtB',S.players[1].country);
   const bg=(id,u)=>$(id).style.backgroundImage=u?`url('${u}')`:'';
   bg('thA',S.players[0].photo); bg('thB',S.players[1].photo); bg('bdA',S.players[0].body); bg('bdB',S.players[1].body);
 }
-const SCR_NAME={bug:'Счёт',vs:'VS',frame:'Партия',match:'Встреча',bracket:'Сетка',break:'Перерыв',winner:'Победитель',spons:'Спонсоры',side:'Мини-счёт',chart:'График',poll:'Опрос',hidden:'Скрыто'};
+const SCR_NAME={bug:'Счёт',vs:'VS',frame:'Партия',match:'Встреча',bracket:'Сетка',break:'Перерыв',winner:'Победитель',spons:'Спонсоры',side:'Мини-счёт',chart:'График',poll:'Опрос',slides:'Вставки',hidden:'Скрыто'};
 function renderComm(){
   const el=$('comm'), [A,B]=S.players, w=winner(), L=isLong();
   const cur=frameStats(), M=matchStats(), ids=STAT_ALL.filter(id=>!(L&&id==='frames'));
@@ -1610,6 +1708,7 @@ function renderAll(external){
   syncFields(external);
   renderCfg(external);
   renderPeople(external);
+  renderSlidesPanel(external);
   const pr=$('pollRes'); if(pr){ const t=POLL.total; pr.textContent=`${surn(S.players[0].name)} ${t?Math.round(POLL.a/t*100):0}% : ${t?Math.round(POLL.b/t*100):0}% ${surn(S.players[1].name)}`; $('pollSt').textContent=(POLL.open?'открыто':'закрыто')+` · голосов: ${t}`; }
   if(external) fillBrView();
   renderLog();
@@ -1676,6 +1775,7 @@ function tick(only){
       e.querySelector('b').textContent=sh.txt;
     });
     r.querySelectorAll('[data-spi]').forEach(e=>e.classList.toggle('cur',+e.dataset.spi===spI));
+    const slI=slideCur(); r.querySelectorAll('[data-sl]').forEach(e=>{ const on=e.dataset.sl===slI; if(e.classList.contains('cur')!==on) e.classList.toggle('cur',on); });
     // ширина вкладки спонсора под пропорции текущего логотипа
     r.querySelectorAll('[data-k="sptab"]').forEach(tab=>{ const im=tab.querySelector('.spi.cur img');
       if(im&&im.naturalWidth&&im.naturalHeight){ const ar=im.naturalWidth/im.naturalHeight, w=Math.round(Math.min(520,Math.max(170,50*ar+44))); if(tab._w!==w){ tab._w=w; tab.style.setProperty('--spw',w+'px'); } } });
@@ -1710,6 +1810,12 @@ document.addEventListener('click',e=>{
   else if(b.id==='tplSave'){ const n=$('tplName').value.trim()||S.title||'Шаблон'; fetch('/api/templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,data:tplData()})}).then(r=>r.json()).then(()=>{ $('tplName').value=''; toast('Шаблон сохранён'); loadTpl(); }); }
   else if(b.dataset.tpa) applyTpl(b.dataset.tpa,TABLE);
   else if(b.dataset.tpall){ if(!b._arm){ b._arm=1; b.textContent='Точно ко всем?'; setTimeout(()=>{b._arm=0;b.textContent='Ко всем столам'},2500); return; } applyTpl(b.dataset.tpall,'all'); }
+  else if(b.dataset.sladd){ snap(); const t=b.dataset.sladd; S.cfg.slides=(S.cfg.slides||[]).concat({id:Math.random().toString(36).slice(2,9),type:t,
+      title:t==='title'?'Перерыв':t==='partners'?'Партнёры турнира':'',sub:t==='title'?'Трансляция скоро продолжится':'',partners:t==='title'}); save(); renderSlidesPanel(true); }
+  else if(b.dataset.sls){ S.slideId=b.dataset.sls; S.cfg.slRot=false; setScreen('slides'); renderCfg(true); }
+  else if(b.dataset.slx!=null){ snap(); S.cfg.slides.splice(+b.dataset.slx,1); save(); renderSlidesPanel(true); }
+  else if(b.dataset.slu!=null||b.dataset.sld!=null){ const i=+(b.dataset.slu??b.dataset.sld), j=b.dataset.slu!=null?i-1:i+1, L=S.cfg.slides; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; save(); renderSlidesPanel(true); }
+  else if(b.dataset.sfc){ const [i,f]=b.dataset.sfc.split(':'); snap(); S.cfg.slides[+i][f]=''; save(); renderSlidesPanel(true); }
   else if(b.dataset.tpd){ fetch('/api/templates/'+b.dataset.tpd,{method:'DELETE'}).then(loadTpl); }
   else if(b.dataset.pdl!=null){ const p=S.players[+b.dataset.pdl], u=p[b.dataset.kind]; if(!u){ toast('Фото нет',true); return; }
     const a=document.createElement('a'); a.href=u+'?dl='+encodeURIComponent(p.name+(b.dataset.kind==='body'?' — в рост':'')); a.download=''; document.body.appendChild(a); a.click(); a.remove(); }
@@ -1735,6 +1841,8 @@ document.addEventListener('click',e=>{
 });
 $('undoBtn').onclick=undo;
 document.addEventListener('change',e=>{const t=e.target;
+  if(t.dataset.sfb){ const [i,f]=t.dataset.sfb.split(':'); S.cfg.slides[+i][f]=t.checked; save(); return; }
+  if(t.dataset.sfi){ const [i,f]=t.dataset.sfi.split(':'); uploadImg(t.files[0],f==='image'?1600:1000,url=>{ snap(); S.cfg.slides[+i][f]=url; save(); renderSlidesPanel(true); }); t.value=''; return; }
   if(t.dataset.lgp!=null){ editEv(+t.dataset.lgp,{i:+t.value}); return; }
   if(t.dataset.lgt!=null){ editEv(+t.dataset.lgt,{t:t.value}); return; }
   if(t.dataset.si!=null){ S.cfg.stats[+t.dataset.si].on=t.checked; save(); renderCfg(true); }
@@ -1742,6 +1850,7 @@ document.addEventListener('change',e=>{const t=e.target;
   else if(t.dataset.ph!=null){ uploadImg(t.files[0],t.dataset.kind==='body'?2200:1000,url=>{ snap(); S.players[+t.dataset.ph][t.dataset.kind]=url; save(); }); t.value=''; }
 });
 document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.sf){ const [i,f]=t.dataset.sf.split(':'); const sl=(S.cfg.slides||[])[+i]; if(sl){ sl[f]=t.value; save(); } return; }
   if(t.dataset.pn!=null||t.dataset.pr!=null){ const x=S.cfg.people[+(t.dataset.pn??t.dataset.pr)]; if(x){ x[t.dataset.pn!=null?'name':'role']=t.value; save(); } return; }
   if(t.dataset.sl!=null){ const x=S.cfg.stats[+t.dataset.sl]; const v=t.value.trim(); x.label=(v===STATDEF[x.id][0])?'':v; save(); }
   else if(t.dataset.col){ S.cfg[t.dataset.col]=t.value; save(); }
@@ -1846,6 +1955,7 @@ $('saveMatch').onclick=()=>{
 
 /* ---- экраны ---- */
 function setScreen(v){
+  if(v==='slides'&&!(S.cfg.slides||[]).length){ toast('Сначала добавьте вставку в разделе «Вставки»',true); return; }
   if(v==='spons'&&!(S.cfg.sponsors||[]).length){ toast('Сначала добавьте логотипы спонсоров',true); return; }
   if(v==='break'&&!S.pclock.running&&pLeft()>0&&S.pclock.acc===0) S.pclock={running:true,start:Date.now(),acc:0};
   if(v==='bracket') loadBracket();
@@ -1880,6 +1990,7 @@ $('pplAdd').onclick=()=>{ snap(); S.cfg.people=(S.cfg.people||[]).concat({name:'
 $('ltHide').onclick=()=>{ S.lt=null; save(); };
 bind('fLtDur',v=>S.cfg.ltDur=Math.max(2,Math.min(60,parseInt(v)||6)));
 bind('fWinTitle',v=>S.cfg.winTitle=v);
+bind('fSlInt',v=>S.cfg.slInt=Math.max(4,Math.min(300,parseInt(v)||12)));
 bind('fFhDur',v=>S.cfg.fhDur=Math.max(2,Math.min(120,parseInt(v)||8)));
 /* ---- статистика победителя за турнир ---- */
 async function computeWin(){
@@ -1945,7 +2056,7 @@ function renderLog(){
 $('logBox').addEventListener('toggle',renderLog);
 /* ---- компактный режим ---- */
 const CMP_KEY='tablo.compact';
-const SCR_LIST=[['bug','Счёт'],['vs','VS'],['frame','Партия'],['match','Встреча'],['bracket','Сетка'],['break','Перерыв'],['winner','Победитель'],['spons','Спонсоры'],['side','Мини-счёт'],['chart','График'],['poll','Опрос'],['hidden','Скрыть']];
+const SCR_LIST=[['bug','Счёт'],['vs','VS'],['frame','Партия'],['match','Встреча'],['bracket','Сетка'],['break','Перерыв'],['winner','Победитель'],['spons','Спонсоры'],['side','Мини-счёт'],['chart','График'],['poll','Опрос'],['slides','Вставки'],['hidden','Скрыть']];
 function setCompact(on){ document.body.classList.toggle('compact',on); try{localStorage.setItem(CMP_KEY,on?'1':'0')}catch(_){} if(S) renderAll(); else fit($('pv')); }
 $('toCompact').onclick=()=>setCompact(true); $('toFull').onclick=()=>setCompact(false);
 $('cScr').innerHTML=SCR_LIST.map(([v,n])=>`<option value="${v}">Экран: ${n}</option>`).join('');
