@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Пульт · Табло пирамида</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
+<script src="/js/qrcode.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -315,6 +316,41 @@ body.comm #comm{display:block;max-width:1400px;margin:0 auto;padding:14px}
 .cm-fh .w{color:#c9a14a}
 @media(max-width:900px){.cm-sc{grid-template-columns:1fr 1fr}.cm-c{grid-column:span 2;order:-1;flex-direction:row;flex-wrap:wrap;gap:14px}.cm-g{grid-template-columns:1fr}.cm-p .sc{font-size:60px}}
 
+/* индикатор подключённых экранов */
+.pres{display:flex;gap:6px;flex-wrap:wrap}
+.pres span{font-size:12px;padding:3px 8px;border-radius:20px;background:#141d33;color:#8590aa;border:1px solid #26314f}
+.pres span.on{background:#0d3a24;color:#8ff0b5;border-color:#14532d}
+.pres span.off.need{background:#3a0b16;color:#ffb3bd;border-color:#8a1426}
+/* опрос и график на табло */
+.pollc{position:absolute;left:210px;top:110px;width:1500px;background:var(--panel);border-radius:var(--r);overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.6);clip-path:inset(0 50% 0 50% round 14px);opacity:0;transition:clip-path .85s cubic-bezier(.65,0,.35,1),opacity .35s ease}
+.on .pollc{clip-path:inset(0 0 0 0 round 14px);opacity:1}
+.pl-b{display:grid;grid-template-columns:1fr 1fr 360px;gap:30px;padding:34px 40px 40px;align-items:center}
+.pl-p{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center}
+.pl-p .ph{width:150px;height:180px;border-radius:12px;background:#222924 center top/cover no-repeat;box-shadow:0 0 0 3px var(--g2)}
+.pl-p .nm2{font:600 36px/1.1 Oswald;text-transform:uppercase;color:#f1ead6}
+.pl-p .pc{font:700 96px/1 Oswald;color:var(--g);font-variant-numeric:tabular-nums;margin-top:6px}
+.pl-p .bar{height:16px;border-radius:8px;background:#1b1f1d;margin-top:12px;overflow:hidden}.pl-p .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--g2),var(--g));transition:width 1s cubic-bezier(.16,1,.3,1)}
+.pl-q{text-align:center}.pl-q .qr{width:300px;height:300px;margin:0 auto;background:#fff;border-radius:14px;padding:14px}.pl-q .qr svg{width:100%;height:100%}
+.pl-q .u{font:500 22px Oswald;color:#d8c99c;margin-top:12px;letter-spacing:1px}.pl-q .u b{color:#fff}
+.pl-f{text-align:center;font:500 26px Oswald;color:#d8c99c;letter-spacing:2px;text-transform:uppercase;padding:0 0 26px}
+.chc{position:absolute;left:160px;top:70px;width:1600px;background:var(--panel);border-radius:var(--r);overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.6);clip-path:inset(0 50% 0 50% round 14px);opacity:0;transition:clip-path .85s cubic-bezier(.65,0,.35,1),opacity .35s ease}
+.on .chc{clip-path:inset(0 0 0 0 round 14px);opacity:1}
+.ch-l{display:flex;justify-content:center;gap:50px;padding:16px 0 4px;font:600 30px Oswald;text-transform:uppercase}
+.ch-l span{display:flex;align-items:center;gap:12px}.ch-l i{width:36px;height:6px;border-radius:3px;display:inline-block}
+.ch-l b{font-size:40px;margin-left:6px}
+.ch-svg{display:block;width:1600px;height:740px}
+.ch-svg .ax{stroke:rgba(201,161,74,.25);stroke-width:1}.ch-svg .tx{fill:#8a836f;font:500 20px Oswald}
+.ch-svg .fr{stroke:rgba(255,255,255,.18);stroke-width:2;stroke-dasharray:6 8}.ch-svg .ft{fill:#d8c99c;font:600 20px Oswald}
+.ch-svg .ln{fill:none;stroke-width:6;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:6000;stroke-dashoffset:6000}
+.on .ch-svg .ln{transition:stroke-dashoffset 2.4s cubic-bezier(.65,0,.35,1) .5s;stroke-dashoffset:0}
+.ch-svg .ar{opacity:0;transition:opacity 1s ease 1.6s}.on .ch-svg .ar{opacity:.16}
+.ch-svg .dt{opacity:0;transition:opacity .5s ease 2.6s}.on .ch-svg .dt{opacity:1}
+.cm-ch svg{width:100%;height:auto;display:block}
+#comm{--g:#c9a14a}
+.ch-sm .ln{fill:none;stroke-width:3;stroke-linejoin:round}.ch-sm .ar{opacity:.14}.ch-sm .ax{stroke:#1d2742}.ch-sm .tx{fill:#8590aa;font:12px 'Roboto Condensed'}.ch-sm .fr{stroke:#33405f;stroke-dasharray:4 4}
+.tpl{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid #141d33}
+.tpl:first-child{border-top:0}.tpl b{font-weight:600}.tpl small{color:#8590aa;margin-left:8px}
+
 /* ============ CONTROL PANEL ============ */
 #panel{max-width:1180px;margin:0 auto;padding:14px 14px 60px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
@@ -400,7 +436,7 @@ body.wait #pcols,body.wait .turn{opacity:.4;pointer-events:none}
 .lk{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-top:8px}
 .lk span{grid-column:span 2;font-size:13px;color:#aab4cb}
 .lk input{background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:9px;font-size:13px;min-width:0}
-.seg.big{grid-template-columns:repeat(10,1fr)}
+.seg.big{grid-template-columns:repeat(7,1fr)}
 .seg.big button{padding:12px 4px;font-size:14px}
 textarea.ta{width:100%;min-height:96px;background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:10px;font:inherit;font-size:15px;resize:vertical}
 .ppl{display:grid;gap:6px;margin-top:8px}
@@ -497,7 +533,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
   </div>
 
   <div class="card2 links">
-    <div class="hd2"><span><a href="/" class="back">← Все столы</a> · <b id="tblName" style="color:#fff"></b></span><span class="net" id="net">Подключение…</span></div>
+    <div class="hd2"><span><a href="/" class="back">← Все столы</a> · <b id="tblName" style="color:#fff"></b></span><span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="pres" id="pres"></span><span class="net" id="net">Подключение…</span></span></div>
     <div class="lk"><span>Ссылка для OBS — источник «Браузер», 3840×2160 (4K)</span><input readonly id="obsUrl"><button class="sm" data-copy="obsUrl">Копировать</button></div>
     <div class="lk"><span>Мини-счёт для бокового ракурса — отдельный источник «Браузер» в сцене боковой камеры (всегда маленький счёт)</span><input readonly id="obsSide"><button class="sm" data-copy="obsSide">Копировать</button></div>
     <div class="lk"><span>Экран комментатора — открыть на ноутбуке/планшете комментатора, в эфир не выводится</span><input readonly id="commUrl"><button class="sm" data-copy="commUrl">Копировать</button></div>
@@ -524,6 +560,8 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
       <button data-v="winner">Победитель</button>
       <button data-v="spons">Спонсоры</button>
       <button data-v="side">Мини</button>
+      <button data-v="chart">График</button>
+      <button data-v="poll">Опрос</button>
       <button data-v="hidden">Скрыть</button>
     </div>
   </div>
@@ -617,6 +655,26 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
       <label>Какие матчи<select id="fBrPage"></select></label>
     </div>
     <div class="hint">Большие сетки показываются частями по 16 матчей первого столбца. Матч, который сейчас идёт на этом столе, подсвечен «LIVE».</div>
+  </details>
+
+  <details class="card2 set">
+    <summary>Опрос зрителей «Кто победит?»</summary>
+    <div class="bar2"><b style="font:700 26px Oswald" id="pollRes">0 : 0</b><span class="hint" style="margin:0" id="pollSt"></span></div>
+    <div class="bar2">
+      <button class="btn2 ok" data-poll="open">▶ Открыть голосование</button>
+      <button class="btn2 s" data-poll="close">⏸ Закрыть</button>
+      <button class="btn2 r" data-poll="reset">↺ Обнулить голоса</button>
+      <button class="btn2" id="pollShow">Показать в эфире</button>
+    </div>
+    <div class="lk"><span>Ссылка для зрителей (на экране будет QR-код с ней)</span><input readonly id="voteUrl"><button class="sm" data-copy="voteUrl">Копировать</button></div>
+    <div class="hint">Зрители голосуют с телефона, один голос с устройства (можно передумать). Проценты обновляются в эфире сразу.</div>
+  </details>
+
+  <details class="card2 set" id="tplBox">
+    <summary>Шаблоны турниров</summary>
+    <div class="bar2"><input id="tplName" placeholder="Название шаблона, например «Длинная до 60 — Кубок»" style="flex:1;min-width:200px;background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:10px;font-size:15px"><button class="btn2 ok" id="tplSave">💾 Сохранить текущие настройки</button></div>
+    <div id="tplList"></div>
+    <div class="hint">В шаблон попадают: название и подпись, вид игры, до скольки, шары партии, штраф, пары, таймер и продления, перерыв, логотип, спонсоры, бегущая строка, титры, вид табло. Счёт и игроки не меняются. Если на столе уже идёт матч, вид игры на нём не переключается.</div>
   </details>
 
   <details class="card2 set" id="logBox">
@@ -811,10 +869,10 @@ function apply(m,fromPoll){
 }
 function connect(){
   let proto=location.protocol==='https:'?'wss':'ws';
-  try{ ws=new WebSocket(proto+'://'+location.host+'/ws?table='+encodeURIComponent(TABLE)); }catch(e){ return onFail(); }
+  try{ ws=new WebSocket(proto+'://'+location.host+'/ws?table='+encodeURIComponent(TABLE)+'&role='+(isComm()?'k':isOverlay()?(VIEW==='side'?'side':'o'):'t')); }catch(e){ return onFail(); }
   const t=setTimeout(()=>{ if(!wsOpen) try{ws.close()}catch(e){} },8000);
   ws.onopen=()=>{ clearTimeout(t); wsOpen=true; wsFails=0; setNet(true,'Онлайн'); };
-  ws.onmessage=e=>{ let m; try{m=JSON.parse(e.data)}catch(_){return} if(m.type==='ack') lastRev=Math.max(lastRev,m.rev); else apply(m); };
+  ws.onmessage=e=>{ let m; try{m=JSON.parse(e.data)}catch(_){return} if(m.type==='ack') lastRev=Math.max(lastRev,m.rev); else if(m.type==='presence') showPresence(m.n); else if(m.type==='poll') setPoll(m); else apply(m); };
   ws.onclose=()=>{ clearTimeout(t); const was=wsOpen; wsOpen=false; if(was) setNet(false,'Переподключение…'); onFail(); };
 }
 function onFail(){
@@ -1039,6 +1097,8 @@ function skeleton(){
    </div></div>
    <div class="scr" data-s="bracket"><div class="brc"><div data-k="brHd"></div><div class="brw" data-k="brW"></div></div></div>
    <div class="scr" data-s="break"><div class="brk"><div class="brk-bg" data-k="pBg"></div><div class="brk-sh"></div><div class="brk-c" data-k="pC"></div><div class="brk-sp" data-k="pSp"></div></div></div>
+   <div class="scr" data-s="poll"><div class="pollc" data-k="pollC"></div></div>
+   <div class="scr" data-s="chart"><div class="chc" data-k="chC"></div></div>
    <div class="scr" data-s="winner"><div class="win"><canvas class="spark"></canvas><div class="win-ph" data-k="wPh"></div><div class="win-r" data-k="wR"></div></div></div>
    <div class="lt" data-k="lt"></div>
    <div class="ticker" data-k="tkr"><div class="tk-l" data-k="tkL"></div><div class="tk-v"><div class="tk-t" data-k="tkT"></div></div></div>
@@ -1283,6 +1343,75 @@ function updSide(c){
   });
   setK(c,'sdI',w>=0?'Матч завершён':(isLong()?`Пирамида ${S.rack||1}${S.rk==='cut'?' · усеч.':''} · `:`Партия ${A.frames+B.frames+1} · `)+(C.mclock?'<span data-mc></span>':''));
 }
+/* ---- индикатор подключённых экранов (пульт) ---- */
+function showPresence(n){ const el=$('pres'); if(!el) return; n=n||{};
+  const it=(k,l,need)=>`<span class="${n[k]?'on':'off'}${need?' need':''}" title="${l}">${n[k]?'●':'○'} ${l}${n[k]>1?' ×'+n[k]:''}</span>`;
+  el.innerHTML=it('o','Табло (OBS)',true)+it('side','Мини-счёт')+it('k','Комментатор')+(n.t>1?`<span class="on">Пультов: ${n.t}</span>`:''); }
+/* ---- опрос зрителей ---- */
+let POLL={open:false,a:0,b:0,total:0};
+function setPoll(m){ POLL={open:!!m.open,a:+m.a||0,b:+m.b||0,total:+m.total||0}; if(S) renderAll(); }
+function loadPoll(){ fetch('/api/poll/'+TABLE,{cache:'no-store'}).then(r=>r.json()).then(j=>{ if(!j.error) setPoll(j); }).catch(()=>{}); }
+const voteUrl=()=>location.origin+'/v/'+TABLE;
+function pollHTML(){
+  const [A,B]=S.players, t=POLL.total, pa=t?Math.round(POLL.a/t*100):50, pb=t?100-pa:50;
+  const lg=S.cfg.logo?`<img src="${esc(S.cfg.logo)}" alt="">`:'';
+  const pp=(p,pc,i)=>`<div class="pl-p"><div class="ph" style="${mPhoto(p,i)||p.photo?`background-image:url('${esc(p.photo)}')`:''}"></div><div><div class="nm2 fitt">${esc(teamName(p))}</div><div class="pc">${t?pc+'%':'—'}</div><div class="bar"><i style="width:${t?pc:0}%"></i></div></div></div>`;
+  return `<div class="hd shine"><span class="lg">${lg}</span><span class="tt fitt">Кто победит?</span><span class="lg">${lg}</span></div>
+    <div class="pl-b">${pp(A,pa,0)}${pp(B,pb,1)}<div class="pl-q"><div class="qr" data-qr="${esc(voteUrl())}"></div><div class="u">Голосуйте с телефона<br><b>${esc(voteUrl().replace(/^https?:\/\//,''))}</b></div></div></div>
+    <div class="pl-f">${POLL.open?'Голосование открыто':'Голосование закрыто'} · проголосовало: ${t}</div>`;
+}
+function fillQR(c){ c.querySelectorAll('[data-qr]').forEach(el=>{ if(el._q===el.dataset.qr||typeof qrcode==='undefined') return; el._q=el.dataset.qr;
+  try{ const q=qrcode(0,'M'); q.addData(el.dataset.qr); q.make(); el.innerHTML=q.createSvgTag({cellSize:8,margin:0,scalable:true}); }catch(_){} }); }
+/* ---- график хода матча ---- */
+function chartData(){
+  const L=isLong(), pts=[[{t:0,v:0}],[{t:0,v:0}]], marks=[];
+  const val=Y=>L?[Y.players[0].frames,Y.players[1].frames]:[made(Y.players[0]),made(Y.players[1])];
+  let prevF=null;
+  // значения счёта после каждого события журнала
+  const Z=clone(S); Z.log=[]; replay(Z);
+  S.log.forEach((e,k)=>{ applyEv(Z,e); const t=(e.mt||0); const v=val(Z);
+    pts[0].push({t,v:v[0],k}); pts[1].push({t,v:v[1],k});
+    const f=Z.players[0].frames+Z.players[1].frames;
+    if(!L&&prevF!=null&&f!==prevF) marks.push({t,k,label:`${Z.players[0].frames}:${Z.players[1].frames}`});
+    if(L&&e.t==='rack') marks.push({t,k,label:`пирамида ${Z.rack}`});
+    prevF=f; });
+  const useIdx=!S.log.some(e=>e.mt>0);
+  if(useIdx){ pts.forEach(a=>a.forEach((p,i)=>p.t=i)); marks.forEach(m=>{ m.t=m.k+1; }); }
+  return {pts,marks,useIdx};
+}
+function chartSVG(W,H,big){
+  const {pts,marks,useIdx}=chartData(), padL=big?70:40, padR=big?40:14, padT=big?30:12, padB=big?60:28;
+  const tMax=Math.max(1,...pts[0].map(p=>p.t)), vMax=Math.max(isLong()?Math.min(S.raceTo,10):5,...pts[0].map(p=>p.v),...pts[1].map(p=>p.v));
+  const x=t=>padL+(W-padL-padR)*t/tMax, y=v=>H-padB-(H-padT-padB)*v/vMax;
+  const step=a=>a.map((p,i)=>(i?`H${x(p.t).toFixed(1)}V${y(p.v).toFixed(1)}`:`M${x(p.t).toFixed(1)} ${y(p.v).toFixed(1)}`)).join('');
+  const area=a=>step(a)+`V${y(0)}H${x(0)}Z`;
+  const cols=['var(--g)','#e9e1c8'];
+  let g='';
+  const nT=big?6:4; for(let i=0;i<=nT;i++){ const v=Math.round(vMax*i/nT); g+=`<line class="ax" x1="${padL}" x2="${W-padR}" y1="${y(v)}" y2="${y(v)}"/><text class="tx" x="${padL-10}" y="${y(v)+7}" text-anchor="end">${v}</text>`; }
+  for(let i=0;i<=nT;i++){ const t=tMax*i/nT; g+=`<text class="tx" x="${x(t)}" y="${H-padB+(big?34:20)}" text-anchor="middle">${useIdx?Math.round(t):fmtH(t)}</text>`; }
+  g+=marks.map(m=>`<line class="fr" x1="${x(m.t)}" x2="${x(m.t)}" y1="${padT}" y2="${H-padB}"/>${big?`<text class="ft" x="${x(m.t)+6}" y="${padT+20}">${esc(m.label)}</text>`:''}`).join('');
+  g+=pts.map((a,i)=>`<path class="ln" d="${step(a)}" stroke="${cols[i]}"/>`).join('');
+  g+=pts.map((a,i)=>{ const p=a[a.length-1]; return `<circle class="dt" cx="${x(p.t)}" cy="${y(p.v)}" r="${big?10:5}" fill="${cols[i]}"/>`; }).join('');
+  return `<svg class="${big?'ch-svg':'ch-sm'}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${g}</svg>`;
+}
+function chartCard(){
+  const [A,B]=S.players, L=isLong(), lg=S.cfg.logo?`<img src="${esc(S.cfg.logo)}" alt="">`:'';
+  const v=p=>L?p.frames:made(p);
+  return `<div class="hd shine"><span class="lg">${lg}</span><span class="tt fitt">${L?'Ход матча':'Забитые шары по ходу матча'}</span><span class="lg">${lg}</span></div>
+    <div class="ch-l"><span><i style="background:var(--g)"></i>${esc(teamName(A))}<b style="color:var(--g)">${v(A)}</b></span><span><i style="background:#e9e1c8"></i>${esc(teamName(B))}<b>${v(B)}</b></span></div>
+    ${chartSVG(1600,740,true)}`;
+}
+/* ---- шаблоны турниров ---- */
+let TPL=[];
+function loadTpl(){ fetch('/api/templates').then(r=>r.ok?r.json():[]).then(l=>{ TPL=l||[]; renderTpl(); }).catch(()=>{}); }
+function renderTpl(){ const el=$('tplList'); if(!el) return;
+  el.innerHTML=TPL.length?TPL.map(t=>`<div class="tpl"><span><b>${esc(t.name)}</b><small>${esc([t.data.title,t.data.game==='long'?'длинная до '+t.data.raceTo:'до '+t.data.raceTo+' побед'].filter(Boolean).join(' · '))}</small></span>
+    <button class="btn2" data-tpa="${t.id}">К этому столу</button><button class="btn2 s" data-tpall="${t.id}">Ко всем столам</button><button class="btn2 r" data-tpd="${t.id}">✕</button></div>`).join('')
+    :'<span class="hint" style="margin:0">Шаблонов пока нет. Настройте стол (название, вид игры, до скольки, логотип, спонсоры, строка…) и сохраните.</span>'; }
+function tplData(){ const c=clone(S.cfg); return {title:S.title,subtitle:S.subtitle,raceTo:S.raceTo,ballsTo:S.ballsTo,game:S.game,foulBall:S.foulBall,pairs:S.pairs,shot:clone(S.shot),pdur:S.pdur,firstKind:S.firstKind,cfg:c}; }
+function applyTpl(id,table){ fetch('/api/templates/'+id+'/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table})})
+  .then(r=>r.json()).then(j=>{ if(!j.ok) throw j; toast(`Шаблон применён: столов ${j.applied}`+(j.busy&&j.busy.length?` (идёт матч, вид игры не меняли: ${j.busy.join(', ')})`:'')); })
+  .catch(j=>toast((j&&j.error)||'Не удалось применить',true)); }
 function updateStage(c,first){
   if(!c.querySelector('.stage')){ c.innerHTML=skeleton(); c._prev={}; first=true; }
   const st=c.querySelector('.stage'); fit(c);
@@ -1321,6 +1450,8 @@ function updateStage(c,first){
   setK(c,'brW',bracketHTML());
   setK(c,'lt',S.lt?`<div class="lt-bar"></div><div class="lt-b"><div class="lt-n">${esc(S.lt.name)}</div>${S.lt.role?`<div class="lt-r">${esc(S.lt.role)}</div>`:''}</div>`:'');
   updSide(c);
+  setK(c,'pollC',pollHTML()); fillQR(c);
+  setK(c,'chC',chartCard());
   let scr=S.screen==='spons'&&!sp.length?'hidden':S.screen;
   if(VIEW==='side') scr=S.screen==='hidden'?'hidden':'side'; // отдельная ссылка для бокового ракурса: всегда мини-счёт
   const tkOn=!!(C.tkOn&&['bug','break','bracket'].includes(scr));
@@ -1428,7 +1559,7 @@ function syncFields(force){
   const bg=(id,u)=>$(id).style.backgroundImage=u?`url('${u}')`:'';
   bg('thA',S.players[0].photo); bg('thB',S.players[1].photo); bg('bdA',S.players[0].body); bg('bdB',S.players[1].body);
 }
-const SCR_NAME={bug:'Счёт',vs:'VS',frame:'Партия',match:'Встреча',bracket:'Сетка',break:'Перерыв',winner:'Победитель',spons:'Спонсоры',side:'Мини-счёт',hidden:'Скрыто'};
+const SCR_NAME={bug:'Счёт',vs:'VS',frame:'Партия',match:'Встреча',bracket:'Сетка',break:'Перерыв',winner:'Победитель',spons:'Спонсоры',side:'Мини-счёт',chart:'График',poll:'Опрос',hidden:'Скрыто'};
 function renderComm(){
   const el=$('comm'), [A,B]=S.players, w=winner(), L=isLong();
   const cur=frameStats(), M=matchStats(), ids=STAT_ALL.filter(id=>!(L&&id==='frames'));
@@ -1451,6 +1582,7 @@ function renderComm(){
   const lastF=S.lastFrame&&!cur[0].shots&&!cur[1].shots;
   el.innerHTML=`<div class="cm-top"><h1>${esc(S.title)}${S.subtitle?' · '+esc(S.subtitle):''}</h1><span class="air">Экран комментатора — не в эфире · сейчас в эфире:<b>${esc(SCR_NAME[S.screen]||S.screen)}</b> <span class="net" id="net">Онлайн</span></span></div>
     <div class="cm-sc">${card(0)}<div class="cm-c"><span class="l">${S.shot.mode==='up'?'подготовка':'на удар'}</span><span class="sh" data-cc></span><span class="l">время матча</span><span class="mt" data-mc></span><span class="race">${esc(racePhrase())}<br>${w>=0?'матч завершён':esc(fn)}</span></div>${card(1)}</div>
+    <div class="cm-box cm-ch" style="margin-top:10px"><h3>${L?'Ход матча (очки)':'Забитые шары по ходу матча'} — <span style="color:#c9a14a">${esc(surn(A.name))}</span> / <span style="color:#e9e1c8">${esc(surn(B.name))}</span></h3>${S.log.length?chartSVG(1200,220,false):'<span style="color:#8590aa">Пока нет ударов</span>'}</div>
     <div class="cm-g"><div class="cm-box"><h3>Статистика встречи</h3>${tbl(M,false)}</div>
       <div><div class="cm-box"><h3>${lastF?`Прошлая ${L?'пирамида':'партия'} (${S.lastFrame.n})`:`Текущая ${L?'пирамида':'партия'}`}</h3>${tbl(lastF?S.lastFrame.p:cur,true)}</div>
       ${fh?`<div class="cm-box" style="margin-top:10px"><h3>${L?'Пирамиды':'Партии'}: счёт</h3><div class="cm-fh">${fh}</div></div>`:''}
@@ -1473,6 +1605,7 @@ function renderAll(external){
   syncFields(external);
   renderCfg(external);
   renderPeople(external);
+  const pr=$('pollRes'); if(pr){ const t=POLL.total; pr.textContent=`${surn(S.players[0].name)} ${t?Math.round(POLL.a/t*100):0}% : ${t?Math.round(POLL.b/t*100):0}% ${surn(S.players[1].name)}`; $('pollSt').textContent=(POLL.open?'открыто':'закрыто')+` · голосов: ${t}`; }
   if(external) fillBrView();
   renderLog();
   renderCompact();
@@ -1480,7 +1613,7 @@ function renderAll(external){
 }
 function setupLinks(){
   const ov=location.origin+'/o/'+TABLE;
-  $('obsUrl').value=ov; $('openOv').href=ov; $('obsSide').value=ov+'?v=side'; $('commUrl').value=location.origin+'/k/'+TABLE;
+  $('obsUrl').value=ov; $('openOv').href=ov; $('obsSide').value=ov+'?v=side'; $('voteUrl').value=voteUrl(); $('commUrl').value=location.origin+'/k/'+TABLE;
   fetch('/api/table/'+TABLE).then(r=>r.json()).then(t=>{ if(t&&t.name){ $('tblName').textContent=t.name; document.title='Пульт · '+t.name; } }).catch(()=>{});
   const opts=Object.entries(FLAGS).map(([k,[n]])=>`<option value="${k}">${n}</option>`).join('');
   $('fCtA').innerHTML=opts; $('fCtB').innerHTML=opts;
@@ -1567,6 +1700,12 @@ document.addEventListener('click',e=>{
   else if(b.dataset.b) ball(+b.dataset.i,+b.dataset.b);
   else if(b.dataset.ext!=null) extend(+b.dataset.ext);
   else if(b.dataset.sub!=null) ev('sub',+b.dataset.sub);
+  else if(b.dataset.poll){ fetch('/api/poll/'+TABLE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:b.dataset.poll})}).then(r=>r.json()).then(()=>{ loadPoll(); toast({open:'Голосование открыто',close:'Голосование закрыто',reset:'Голоса обнулены'}[b.dataset.poll]); }); }
+  else if(b.id==='pollShow'){ if(!POLL.open) fetch('/api/poll/'+TABLE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'open'})}).then(loadPoll); setScreen('poll'); }
+  else if(b.id==='tplSave'){ const n=$('tplName').value.trim()||S.title||'Шаблон'; fetch('/api/templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,data:tplData()})}).then(r=>r.json()).then(()=>{ $('tplName').value=''; toast('Шаблон сохранён'); loadTpl(); }); }
+  else if(b.dataset.tpa) applyTpl(b.dataset.tpa,TABLE);
+  else if(b.dataset.tpall){ if(!b._arm){ b._arm=1; b.textContent='Точно ко всем?'; setTimeout(()=>{b._arm=0;b.textContent='Ко всем столам'},2500); return; } applyTpl(b.dataset.tpall,'all'); }
+  else if(b.dataset.tpd){ fetch('/api/templates/'+b.dataset.tpd,{method:'DELETE'}).then(loadTpl); }
   else if(b.dataset.pdl!=null){ const p=S.players[+b.dataset.pdl], u=p[b.dataset.kind]; if(!u){ toast('Фото нет',true); return; }
     const a=document.createElement('a'); a.href=u+'?dl='+encodeURIComponent(p.name+(b.dataset.kind==='body'?' — в рост':'')); a.download=''; document.body.appendChild(a); a.click(); a.remove(); }
   else if(b.dataset.pprof!=null){ const p=S.players[+b.dataset.pprof], u=p[b.dataset.kind], m=/\/photos\/([\w-]+)\.jpg/.exec(u||'');
@@ -1801,7 +1940,7 @@ function renderLog(){
 $('logBox').addEventListener('toggle',renderLog);
 /* ---- компактный режим ---- */
 const CMP_KEY='tablo.compact';
-const SCR_LIST=[['bug','Счёт'],['vs','VS'],['frame','Партия'],['match','Встреча'],['bracket','Сетка'],['break','Перерыв'],['winner','Победитель'],['spons','Спонсоры'],['side','Мини-счёт'],['hidden','Скрыть']];
+const SCR_LIST=[['bug','Счёт'],['vs','VS'],['frame','Партия'],['match','Встреча'],['bracket','Сетка'],['break','Перерыв'],['winner','Победитель'],['spons','Спонсоры'],['side','Мини-счёт'],['chart','График'],['poll','Опрос'],['hidden','Скрыть']];
 function setCompact(on){ document.body.classList.toggle('compact',on); try{localStorage.setItem(CMP_KEY,on?'1':'0')}catch(_){} if(S) renderAll(); else fit($('pv')); }
 $('toCompact').onclick=()=>setCompact(true); $('toFull').onclick=()=>setCompact(false);
 $('cScr').innerHTML=SCR_LIST.map(([v,n])=>`<option value="${v}">Экран: ${n}</option>`).join('');
@@ -1829,7 +1968,8 @@ function renderCompact(){
 S=norm({});
 function route(){document.body.classList.toggle('overlay',isOverlay()&&!isComm());document.body.classList.toggle('comm',isComm());if(isComm()) document.title='Комментатор · Табло';renderAll(true)}
 window.addEventListener('resize',()=>{fit(isOverlay()?$('ovWrap'):$('pv'))});
-if(!isOverlay()){ setupLinks(); loadPlayers(); loadBracket();
+loadPoll();
+if(!isOverlay()){ setupLinks(); loadPlayers(); loadBracket(); loadTpl();
   let cm=null; try{ cm=localStorage.getItem(CMP_KEY) }catch(_){}
   if(cm==='1'||(cm===null&&window.innerWidth<700)) document.body.classList.add('compact'); }
 route();
