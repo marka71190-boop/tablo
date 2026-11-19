@@ -589,13 +589,13 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
       <label>Страна игрока 1<select id="fCtA"></select></label>
       <label>Страна игрока 2<select id="fCtB"></select></label>
       <label>Фото игрока 1 (аватар)
-        <span class="photo-in"><span class="th" id="thA"></span><input type="file" accept="image/*" data-ph="0" data-kind="photo"><button class="sm" data-clr="0" data-kind="photo">✕</button></span></label>
+        <span class="photo-in"><span class="th" id="thA"></span><input type="file" accept="image/*" data-ph="0" data-kind="photo"><button class="sm" data-clr="0" data-kind="photo">✕</button><button class="sm" title="Скачать фото" data-pdl="0" data-kind="photo">⬇</button><button class="sm" title="Сохранить это фото в профиль игрока" data-pprof="0" data-kind="photo">в профиль</button></span></label>
       <label>Фото игрока 2 (аватар)
-        <span class="photo-in"><span class="th" id="thB"></span><input type="file" accept="image/*" data-ph="1" data-kind="photo"><button class="sm" data-clr="1" data-kind="photo">✕</button></span></label>
+        <span class="photo-in"><span class="th" id="thB"></span><input type="file" accept="image/*" data-ph="1" data-kind="photo"><button class="sm" data-clr="1" data-kind="photo">✕</button><button class="sm" title="Скачать фото" data-pdl="1" data-kind="photo">⬇</button><button class="sm" title="Сохранить это фото в профиль игрока" data-pprof="1" data-kind="photo">в профиль</button></span></label>
       <label>Игрок 1 в полный рост (для экранов статистики)
-        <span class="photo-in"><span class="th body" id="bdA"></span><input type="file" accept="image/*" data-ph="0" data-kind="body"><button class="sm" data-clr="0" data-kind="body">✕</button></span></label>
+        <span class="photo-in"><span class="th body" id="bdA"></span><input type="file" accept="image/*" data-ph="0" data-kind="body"><button class="sm" data-clr="0" data-kind="body">✕</button><button class="sm" title="Скачать фото" data-pdl="0" data-kind="body">⬇</button><button class="sm" title="Сохранить это фото в профиль игрока" data-pprof="0" data-kind="body">в профиль</button></span></label>
       <label>Игрок 2 в полный рост
-        <span class="photo-in"><span class="th body" id="bdB"></span><input type="file" accept="image/*" data-ph="1" data-kind="body"><button class="sm" data-clr="1" data-kind="body">✕</button></span></label>
+        <span class="photo-in"><span class="th body" id="bdB"></span><input type="file" accept="image/*" data-ph="1" data-kind="body"><button class="sm" data-clr="1" data-kind="body">✕</button><button class="sm" title="Скачать фото" data-pdl="1" data-kind="body">⬇</button><button class="sm" title="Сохранить это фото в профиль игрока" data-pprof="1" data-kind="body">в профиль</button></span></label>
     </div>
     <div class="bar2">
       <button class="sm" id="newFrameStats">Обнулить статистику (счёт оставить)</button>
@@ -1567,6 +1567,14 @@ document.addEventListener('click',e=>{
   else if(b.dataset.b) ball(+b.dataset.i,+b.dataset.b);
   else if(b.dataset.ext!=null) extend(+b.dataset.ext);
   else if(b.dataset.sub!=null) ev('sub',+b.dataset.sub);
+  else if(b.dataset.pdl!=null){ const p=S.players[+b.dataset.pdl], u=p[b.dataset.kind]; if(!u){ toast('Фото нет',true); return; }
+    const a=document.createElement('a'); a.href=u+'?dl='+encodeURIComponent(p.name+(b.dataset.kind==='body'?' — в рост':'')); a.download=''; document.body.appendChild(a); a.click(); a.remove(); }
+  else if(b.dataset.pprof!=null){ const p=S.players[+b.dataset.pprof], u=p[b.dataset.kind], m=/\/photos\/([\w-]+)\.jpg/.exec(u||'');
+    if(!m){ toast('Сначала загрузите фото',true); return; }
+    const toProf=id=>fetch('/api/players/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[b.dataset.kind==='body'?'bodyRef':'photoRef']:m[1]})}).then(r=>{ if(!r.ok) throw 0; toast('Фото сохранено в профиль: '+p.name); loadPlayers(); });
+    if(p.playerId) toProf(p.playerId).catch(()=>toast('Не удалось сохранить',true));
+    else fetch('/api/players',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:p.name,country:p.country})}).then(r=>r.json())
+      .then(j=>{ if(!j.id) throw 0; p.playerId=j.id; save(); return toProf(j.id); }).catch(()=>toast('Не удалось сохранить',true)); }
   else if(b.dataset.rack!=null){ ev('rack',+b.dataset.rack,b.dataset.rk); toast(pyrName(S.rack,S.rk)+': разбивает '+S.players[+b.dataset.rack].name); }
   else if(b.dataset.up!=null||b.dataset.dn!=null){ const i=+(b.dataset.up??b.dataset.dn), j=b.dataset.up!=null?i-1:i+1, L=S.cfg.stats; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; save(); renderCfg(true); }
   else if(b.dataset.clr!=null){snap();S.players[+b.dataset.clr][b.dataset.kind]='';save();}
