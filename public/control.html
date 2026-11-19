@@ -190,7 +190,8 @@ button{font:inherit;cursor:pointer}
 /* ---------- история партий (вкладка над плашкой слева) ---------- */
 .fhtab{position:absolute;left:24px;bottom:100%;display:flex;align-items:center;gap:4px;height:58px;padding:0 12px;background:var(--panel);border-radius:12px 12px 0 0;border-top:3px solid var(--g);
   transform:translateY(100%);transition:transform .7s cubic-bezier(.16,1,.3,1) .45s;z-index:-1}
-.on .fhtab.has{transform:none}
+.fhtab{transition:transform .9s cubic-bezier(.65,0,.35,1)!important}
+.on .fhtab.has{transform:none;transition:transform .7s cubic-bezier(.16,1,.3,1) .3s!important}
 .fh{display:flex;flex-direction:column;align-items:center;padding:0 9px;font:600 24px/1.05 Oswald;color:#cfc6ad;font-variant-numeric:tabular-nums}
 .fh+.fh{border-left:1px solid rgba(201,161,74,.2)}
 .fh small{font:500 12px Oswald;color:#8a836f;letter-spacing:1px}
@@ -622,6 +623,9 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
       <label class="chk"><input type="checkbox" data-cfg="autoWin"> Показывать экран победителя сразу после последней партии</label>
       <label class="chk"><input type="checkbox" data-cfg="fhist"> История партий над плашкой (счёт шаров по партиям)</label>
     </div>
+    <div class="fields" style="max-width:520px"><label>Длинная пирамида: показывать счёт стойки после «Разбоя», сек<input id="fFhDur" type="number" min="2" max="120"></label></div>
+    <div>
+    </div>
     <div class="hint">Статистика за турнир собирается из сохранённых матчей с тем же названием турнира плюс текущий матч.</div>
   </details>
 
@@ -680,7 +684,7 @@ const DEF=()=>({cfg:null,title:'Кубок клуба',subtitle:'Финал',rac
   clock:{running:true,start:Date.now(),acc:0},shotExt:0,mclock:{running:false,start:Date.now(),acc:0},
   shot:{mode:'down',limit:45,ext:30,extN:1},fs:null,lastFrame:null,updatedAt:0,
   game:'classic',foulBall:false,
-  log:[],base0:null,frameLog:[],pclock:{running:false,start:Date.now(),acc:0},pdur:300000,lt:null,win:null,winShown:false});
+  log:[],base0:null,frameLog:[],pclock:{running:false,start:Date.now(),acc:0},pdur:300000,lt:null,fhPop:null,win:null,winShown:false});
 const clone=o=>JSON.parse(JSON.stringify(o));
 function norm(s){
   s=s||{}; const o=Object.assign(DEF(),s);
@@ -715,6 +719,7 @@ function save(){
 function wire(){
   const o=Object.assign({},S,{mclock:{running:S.mclock.running,acc:mel(),start:0},pclock:{running:S.pclock.running,acc:pel(),start:0}});
   if(S.lt) o.lt=Object.assign({},S.lt,{el:Date.now()-S.lt.shown,shown:0});
+  if(S.fhPop) o.fhPop=Object.assign({},S.fhPop,{el:Date.now()-S.fhPop.shown,shown:0});
   return o;
 }
 const relClock=(c,age,now)=>{ const a=(+(c&&c.acc)||0)+(c&&c.running?age:0); return c&&c.running?{running:true,start:now-a,acc:0}:{running:false,start:now,acc:a}; };
@@ -738,11 +743,12 @@ function apply(m,fromPoll){
   lastRev=Math.max(lastRev,m.rev||0);
   if(!m.state){ const first=!ready; ready=true; document.body.classList.remove('wait'); if(first&&!isOverlay()) push(); renderAll(true); return; }
   const now=Date.now(), el=+m.el||0, age=+m.age||0;
-  const mc=m.state.mclock, pc=m.state.pclock, lt=m.state.lt;
+  const mc=m.state.mclock, pc=m.state.pclock, lt=m.state.lt, fp=m.state.fhPop;
   S=norm(m.state);
   S.clock=S.clock.running?{running:true,start:now-el,acc:0}:{running:false,start:now,acc:el};
   S.mclock=relClock(mc,age,now); S.pclock=relClock(pc,age,now);
   if(lt) S.lt=Object.assign({},lt,{shown:now-((+lt.el||0)+age)});
+  if(fp) S.fhPop=Object.assign({},fp,{shown:now-((+fp.el||0)+age)});
   ready=true; document.body.classList.remove('wait');
   renderAll(true);
 }
@@ -848,7 +854,9 @@ function ev(t,i,pre){
   snap(); mStart(); if(pre) pre();
   const e={t,i,mt:mel()}; if(SHOTS.includes(t)){ e.pr=elapsed(); e.bt=S.ballsTo; if(S.foulBall) e.fb=1; }
   if(S.game==='long') e.lg=1;
+  const fl0=S.frameLog.length;
   S.log.push(e); applyEv(S,e);
+  if(t==='rack'&&S.frameLog.length>fl0) S.fhPop={shown:Date.now(),dur:Math.max(2,S.cfg.fhDur||8)*1000}; // счёт стойки — ненадолго
   if(SHOTS.includes(t)||t==='frame+'||t==='frame-'||t==='turn'||t==='rack') clockRestart();
   save();
 }
@@ -1047,8 +1055,14 @@ function ballsHTML(c,i){
   return Array.from({length:n},(_,k)=>`<span class="bl${k<p.balls?'':' e'}${prev!==undefined&&k<p.balls&&k>=prev?' new':''}"></span>`).join('');
 }
 /* ---- история партий над плашкой ---- */
+// длинная пирамида: счёт стойки показывается после «Разбоя» на несколько секунд и уезжает вниз
+function fhVis(r){ const fh=r.querySelector('[data-k="fh"]'); if(!fh) return;
+  const on=!!(S.cfg.fhist&&S.frameLog.length&&(!isLong()||(S.fhPop&&Date.now()-S.fhPop.shown<S.fhPop.dur)));
+  if(fh.classList.contains('has')!==on) fh.classList.toggle('has',on); }
 function fhHTML(c){
   const L=S.frameLog||[], prev=c._prev.fhn; c._prev.fhn=L.length;
+  if(isLong()){ const f=L[L.length-1]; if(!f) return '';
+    return `<div class="fh"><small>стойка ${L.length}</small><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }
   return L.slice(-7).map((f,k,arr)=>{ const n=L.length-arr.length+k+1, isNew=prev!==undefined&&L.length>prev&&k===arr.length-1;
     return `<div class="fh${isNew?' new':''}"><small>${n}</small><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }).join('');
 }
@@ -1218,7 +1232,7 @@ function updateStage(c,first){
   setK(c,'vsC',vsCard()); setK(c,'frameC',statCard('frame')); setK(c,'matchC',statCard('match'));
   const spc=setK(c,'spC',sponsCard()); spc.classList.toggle('big',sp.length<=2);
   // новые экраны
-  const fh=setK(c,'fh',C.fhist?fhHTML(c):''); fh.classList.toggle('has',!!(C.fhist&&S.frameLog.length));
+  setK(c,'fh',C.fhist?fhHTML(c):''); fhVis(c);
   setK(c,'pBg',breakBg()); setK(c,'pC',breakHTML());
   setK(c,'pSp',C.pSpons?sp.map((u,i)=>`<div class="sptile" data-spt="${i}" style="--d:${(1+i*.15).toFixed(2)}s"><img src="${esc(u)}" alt=""></div>`).join(''):'');
   const wn=winnerHTML(); setK(c,'wPh',wn.ph); setK(c,'wR',wn.r);
@@ -1322,7 +1336,7 @@ function syncFields(force){
   set('fShotMode',S.shot.mode); set('fLimit',S.shot.limit); set('fExt',S.shot.ext); set('fExtN',S.shot.extN); set('fSpInt',S.cfg.spInt);
   set('fNameA',S.players[0].name); set('fNameB',S.players[1].name);
   set('fPDur',Math.round(S.pdur/6000)/10); set('fPTitle',S.cfg.pTitle); set('fPSub',S.cfg.pSub); set('fPEnd',S.cfg.pEnd);
-  set('fTkLabel',S.cfg.tkLabel); set('fTkSpeed',S.cfg.tkSpeed); set('fTk',S.cfg.tk); set('fLtDur',S.cfg.ltDur); set('fWinTitle',S.cfg.winTitle);
+  set('fTkLabel',S.cfg.tkLabel); set('fTkSpeed',S.cfg.tkSpeed); set('fTk',S.cfg.tk); set('fLtDur',S.cfg.ltDur); set('fWinTitle',S.cfg.winTitle); set('fFhDur',S.cfg.fhDur||8);
   const pb=$('thPBg'); if(pb){ pb.style.backgroundImage=S.cfg.pBg&&S.cfg.pBgKind!=='video'?`url('${S.cfg.pBg}')`:''; pb.textContent=S.cfg.pBgKind==='video'?'🎬':''; pb.style.display='grid'; pb.style.placeItems='center'; }
   set('fCtA',S.players[0].country); set('fCtB',S.players[1].country);
   const bg=(id,u)=>$(id).style.backgroundImage=u?`url('${u}')`:'';
@@ -1412,6 +1426,7 @@ function tick(only){
     const pl=pLeft();
     r.querySelectorAll('[data-pc]').forEach(e=>e.textContent=pl>0?fmt(pl+999):'');
     r.querySelectorAll('[data-pst]').forEach(e=>e.textContent=pl>0?(S.cfg.pSub||''):(S.cfg.pEnd||''));
+    fhVis(r);
     const ltE=r.querySelector('[data-k="lt"]'); if(ltE) ltE.classList.toggle('on',!!(S.lt&&Date.now()-S.lt.shown<S.lt.dur&&['bug','hidden','vs','frame','match'].includes(r._scr)));
     r.querySelectorAll('[data-spt]').forEach(e=>e.classList.toggle('cur',spN>1&&+e.dataset.spt===spI));
   }
@@ -1587,6 +1602,7 @@ $('pplAdd').onclick=()=>{ snap(); S.cfg.people=(S.cfg.people||[]).concat({name:'
 $('ltHide').onclick=()=>{ S.lt=null; save(); };
 bind('fLtDur',v=>S.cfg.ltDur=Math.max(2,Math.min(60,parseInt(v)||6)));
 bind('fWinTitle',v=>S.cfg.winTitle=v);
+bind('fFhDur',v=>S.cfg.fhDur=Math.max(2,Math.min(120,parseInt(v)||8)));
 /* ---- статистика победителя за турнир ---- */
 async function computeWin(){
   const w=winner(); if(w<0) return;
