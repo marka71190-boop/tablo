@@ -382,8 +382,20 @@ textarea.ta{width:100%;min-height:96px;background:#070b16;border:1px solid #2631
 /* ============ КОМПАКТНЫЙ РЕЖИМ (телефон) ============ */
 #cmp{display:none}
 body.compact #panel{display:none}
-body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto auto auto 1fr auto;gap:8px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:#070b16;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto auto auto auto 1fr auto;gap:8px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:#070b16;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .c-top{display:flex;gap:6px;align-items:center}
+.c-game{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}
+.c-game button{border:1px solid #26314f;background:#141d33;color:#aab4cb;border-radius:10px;padding:9px 6px;font:600 14px Oswald;text-transform:uppercase}
+.c-game button.act{background:#c9a14a;color:#14110a;border-color:#c9a14a}
+.c-game label{display:flex;align-items:center;gap:4px;font-size:13px;color:#aab4cb}
+.c-game input{width:58px;background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:8px;font:600 16px Oswald}
+.gamebar{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:stretch}
+.gamebar button{border:2px solid #26314f;background:#0f1628;color:#aab4cb;border-radius:12px;padding:12px 10px;font:600 17px Oswald;text-transform:uppercase;letter-spacing:.5px;text-align:left}
+.gamebar button small{display:block;font:400 13px 'Roboto Condensed';text-transform:none;letter-spacing:0;opacity:.8;margin-top:2px}
+.gamebar button.act{border-color:#c9a14a;background:#2c2510;color:#f1d58a}
+.gamebar label{display:flex;flex-direction:column;justify-content:center;gap:4px;font-size:13px;color:#aab4cb;background:#0f1628;border:1px solid #1d2742;border-radius:12px;padding:8px 12px}
+.gamebar input{width:110px;background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:8px;font:700 22px Oswald}
+@media(max-width:700px){.gamebar{grid-template-columns:1fr 1fr}.gamebar label{grid-column:span 2}}
 .c-top select{flex:1;min-width:0;background:#141d33;border:1px solid #26314f;color:#fff;border-radius:9px;padding:9px;font:600 15px Oswald;text-transform:uppercase}
 .c-sc{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:stretch}
 .c-p{background:#0e1527;border:2px solid #1d2742;border-radius:12px;padding:8px 10px;min-width:0}
@@ -418,6 +430,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
 <div id="ovWrap"></div>
 <div id="cmp">
   <div class="c-top"><button class="modebtn" id="toFull">☰ Полный</button><select id="cScr"></select><span class="net" id="net2">…</span></div>
+  <div class="c-game"><button data-game="classic">По партиям</button><button data-game="long">Длинная свободная</button><label>до<input id="cRace" type="number" min="1" max="999"></label></div>
   <div class="c-sc"><div class="c-p" id="cpA"></div><div class="c-clk" id="cClk"><b id="cClk2">0</b><small id="cMcl">0:00</small></div><div class="c-p r" id="cpB"></div></div>
   <div class="c-turn"><div class="who" id="cWho"></div><button class="modebtn" id="cSwap" style="font-size:18px">⇄ Ход</button></div>
   <div class="c-grid" id="cGrid">
@@ -443,6 +456,12 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
     <div class="lk"><span>Ссылка для OBS — источник «Браузер», 3840×2160 (4K)</span><input readonly id="obsUrl"><button class="sm" data-copy="obsUrl">Копировать</button></div>
     <div class="lk"><span>Мини-счёт для бокового ракурса — отдельный источник «Браузер» в сцене боковой камеры (всегда маленький счёт)</span><input readonly id="obsSide"><button class="sm" data-copy="obsSide">Копировать</button></div>
     <div class="lk" style="grid-template-columns:auto 1fr"><span>Угол мини-счёта</span><select id="fSidePos" style="background:#070b16;border:1px solid #26314f;color:#fff;border-radius:8px;padding:8px"><option value="tl">Слева сверху</option><option value="tr">Справа сверху</option><option value="bl">Слева снизу</option><option value="br">Справа снизу</option></select></div>
+  </div>
+
+  <div class="gamebar" id="gameBar" style="margin-bottom:12px">
+    <button data-game="classic">Пирамида по партиям<small>шары → партии, счёт по партиям</small></button>
+    <button data-game="long">Длинная свободная пирамида<small>каждый шар — очко, штраф — очко сопернику</small></button>
+    <label><span id="lRace2">Матч до (побед)</span><input id="fRace2" type="number" min="1" max="999"></label>
   </div>
 
   <div class="pv" id="pv"></div>
@@ -1276,6 +1295,9 @@ function renderCfg(force){
 function syncFields(force){
   const set=(id,v)=>{const el=$(id); if(el&&(force||document.activeElement!==el)) el.value=v};
   set('fSidePos',S.cfg.sidePos||'tl');
+  set('fRace2',S.raceTo); set('cRace',S.raceTo);
+  $('lRace2').textContent=isLong()?'Играем до (очков)':'Матч до (побед)';
+  document.querySelectorAll('[data-game]').forEach(b=>b.classList.toggle('act',b.dataset.game===S.game));
   set('fTitle',S.title); set('fSub',S.subtitle); set('fRace',S.raceTo); set('fBallsTo',S.ballsTo); set('fGame',S.game);
   $('fFoulBall').checked=S.foulBall; $('lRace').textContent=isLong()?'Играем до (очков)':'Матч до (побед в партиях)';
   $('wBallsTo').style.display=isLong()?'none':''; $('wFoulBall').style.display=isLong()?'none':'';
@@ -1435,10 +1457,13 @@ $('mReset').onclick=e=>{ if(!mArm){mArm=true;e.target.textContent='?';setTimeout
 const bind=(id,fn,ev='input')=>$(id).addEventListener(ev,e=>{fn(e.target.value);save()});
 bind('fTitle',v=>S.title=v); bind('fSub',v=>S.subtitle=v);
 bind('fRace',v=>S.raceTo=Math.max(1,parseInt(v)||1));
-$('fGame').onchange=e=>{ snap(); S.game=e.target.value;
+function setGame(v){ if(S.game===v) return; snap(); S.game=v;
   if(S.game==='long'){ if(S.raceTo<20) S.raceTo=60; if(S.screen==='frame') S.screen='match'; } else if(S.raceTo>25) S.raceTo=5;
   S.log.forEach(x=>{ if(S.game==='long') x.lg=1; else delete x.lg; });
-  replay(S); save(); toast(S.game==='long'?'Длинная пирамида: шар = очко, штраф = очко сопернику':'Пирамида по партиям'); };
+  replay(S); save(); toast(S.game==='long'?`Длинная свободная пирамида до ${S.raceTo} очков: шар = очко, штраф = очко сопернику`:'Пирамида по партиям'); }
+$('fGame').onchange=e=>setGame(e.target.value);
+document.querySelectorAll('[data-game]').forEach(b=>b.addEventListener('click',()=>setGame(b.dataset.game)));
+['fRace2','cRace'].forEach(id=>$(id).addEventListener('input',e=>{ S.raceTo=Math.max(1,parseInt(e.target.value)||1); save(); }));
 $('fFoulBall').onchange=e=>{ snap(); S.foulBall=e.target.checked; S.log.forEach(x=>{ if(SHOTS.includes(x.t)){ if(S.foulBall) x.fb=1; else delete x.fb; } }); replay(S); save(); };
 bind('fBallsTo',v=>S.ballsTo=Math.max(0,Math.min(15,parseInt(v)||0)));
 bind('fShotMode',v=>S.shot.mode=v,'change');
@@ -1617,12 +1642,13 @@ $('cFrame').onclick=e=>{ const b=e.currentTarget; if(!cfArm){ cfArm=true; b.text
 function renderCompact(){
   if(!document.body.classList.contains('compact')) return;
   const cp=(i)=>{ const p=S.players[i]; const el=$(i?'cpB':'cpA'); el.classList.toggle('on',S.turn===i);
-    el.innerHTML=`<div class="n">${esc(p.name)}</div><div class="f">${p.frames}<small>${p.balls} ш.</small></div>`; };
+    el.innerHTML=`<div class="n">${esc(p.name)}</div><div class="f">${p.frames}<small>${isLong()?'из '+S.raceTo:p.balls+' ш.'}</small></div>`; };
   cp(0); cp(1);
   const t=S.players[S.turn]; $('cWho').innerHTML=`▶ ${esc(t.name)}${S.series>1?` · серия ${S.series}`:''}`;
   const left=S.shot.extN-t.extUsed; const ce=$('cExt'); ce.textContent=`+${S.shot.ext} (${Math.max(0,left)})`; ce.disabled=S.shot.mode!=='down'||left<=0;
   $('cPause').textContent=S.clock.running?'⏸ Таймер':'▶ Таймер';
   $('cScr').value=S.screen;
+  $('cGrid').querySelector('[data-ca=foul] small').textContent=isLong()?'+1 очко сопернику':(S.foulBall?'+1 шар сопернику':'ход сопернику');
   if(!cfArm) $('cFrame').textContent=isLong()?'+ Очко':'+ Партия';
 }
 S=norm({});
