@@ -63,9 +63,10 @@ button{font:inherit;cursor:pointer}
 .nm{display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--plate);color:var(--plateT);min-width:0}
 .nm.b{flex-direction:row-reverse}
 .nm .t{font:600 30px Oswald;text-transform:uppercase;white-space:nowrap;overflow:hidden;min-width:0}
-.fitx{white-space:nowrap;overflow:hidden;min-width:0;text-overflow:ellipsis}
+.fitx,.fitt{white-space:nowrap;overflow:hidden;min-width:0;text-overflow:ellipsis}
 .nm .dot{flex:none;width:13px;height:13px;border-radius:50%;background:var(--g);animation:dotp 1.6s ease-in-out infinite}
 .nm em{flex:none;font:500 17px Oswald;font-style:normal;text-transform:uppercase;letter-spacing:1px;color:var(--lblT);opacity:.85}
+.pc{color:#fff}.po{opacity:.55}
 .nm em.br{color:var(--g);opacity:1;letter-spacing:2px}
 .nm em.w{color:var(--g);opacity:1;letter-spacing:2px;animation:pulse 1.4s infinite}
 .nm .sp{flex:1}
@@ -121,8 +122,8 @@ button{font:inherit;cursor:pointer}
 .rows{padding:0 20px 20px}
 .row{display:grid;grid-template-columns:1fr 330px 1fr;height:var(--rh,64px);margin-top:5px;opacity:0;transform:translateY(16px);transition:opacity .4s ease,transform .6s cubic-bezier(.16,1,.3,1)}
 .on .row{opacity:1;transform:none;transition-delay:var(--d)}
-.row .v{display:flex;align-items:center;padding:0 26px;background:var(--plate);color:var(--plateT);font:500 calc(var(--rh,64px)*.6) Oswald;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
-.row .v.l{justify-content:flex-end}
+.row .v{display:block;line-height:var(--rh,64px);text-align:left;padding:0 26px;background:var(--plate);color:var(--plateT);font:500 calc(var(--rh,64px)*.6) Oswald;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+.row .v.l{text-align:right}
 .row .v.lead{color:var(--g);font-weight:700}
 .row .k{display:grid;place-items:center;min-width:0;overflow:hidden;padding:0 10px;background:var(--lbl);color:var(--lblT);font:500 calc(var(--rh,64px)*.4) Oswald;text-transform:uppercase;letter-spacing:1px;text-align:center}
 .row .k>span{display:block;max-width:100%;white-space:nowrap;overflow:hidden;line-height:1.15}
@@ -468,6 +469,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
     <button data-game="long">Длинная свободная пирамида<small>каждый шар — очко, штраф — очко сопернику</small></button>
     <label><span id="lRace2">Матч до (побед)</span><input id="fRace2" type="number" min="1" max="999"></label>
   </div>
+  <div class="bar2" style="margin-top:-4px"><label class="chk" style="font-size:16px"><input type="checkbox" id="fPairs"> <b>Парная игра (2 на 2)</b> — игроки пары бьют строго по очереди</label></div>
 
   <div class="pv" id="pv"></div>
 
@@ -537,7 +539,13 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
       </div>
       <label class="full2">Матч из турнирной сетки<select id="pickBr"><option value="">— сетка не загружена —</option></select></label>
       <label>Игрок 1<select id="pickA"></select><input id="fNameA" placeholder="или впишите имя"></label>
+      <label class="pairf">Партнёр игрока 1<select id="pickA2"></select><input id="fNameA2" placeholder="или впишите имя"></label>
       <label>Игрок 2<select id="pickB"></select><input id="fNameB" placeholder="или впишите имя"></label>
+      <label class="pairf">Партнёр игрока 2<select id="pickB2"></select><input id="fNameB2" placeholder="или впишите имя"></label>
+      <label class="pairf">Фото партнёра 1
+        <span class="photo-in"><span class="th" id="thA2"></span><input type="file" accept="image/*" data-ph="0" data-kind="photo2"><button class="sm" data-clr="0" data-kind="photo2">✕</button></span></label>
+      <label class="pairf">Фото партнёра 2
+        <span class="photo-in"><span class="th" id="thB2"></span><input type="file" accept="image/*" data-ph="1" data-kind="photo2"><button class="sm" data-clr="1" data-kind="photo2">✕</button></span></label>
       <label>Страна игрока 1<select id="fCtA"></select></label>
       <label>Страна игрока 2<select id="fCtB"></select></label>
       <label>Фото игрока 1 (аватар)
@@ -669,7 +677,7 @@ const QS=new URLSearchParams(location.search);
 const VIEW=isOverlay()?(QS.get('v')||''):'';                               // ?v=side — мини-счёт для бокового ракурса
 const VIEW_POS=['tl','tr','bl','br'].includes(QS.get('pos'))?QS.get('pos'):''; // угол: tl, tr, bl, br
 const CNT=['foreign','own','luck','attacks','safeties','fouls','time','shots','breaks','breaksOk','fpts'];
-const blankP=n=>({name:n,photo:'',body:'',country:'ru',info:{},playerId:null,frames:0,balls:0,foreign:0,own:0,luck:0,best:0,attacks:0,safeties:0,fouls:0,time:0,shots:0,breaks:0,breaksOk:0,fpts:0,extUsed:0});
+const blankP=n=>({name:n,photo:'',body:'',country:'ru',info:{},playerId:null,name2:'',photo2:'',body2:'',playerId2:null,frames:0,balls:0,foreign:0,own:0,luck:0,best:0,attacks:0,safeties:0,fouls:0,time:0,shots:0,breaks:0,breaksOk:0,fpts:0,extUsed:0});
 const counters=p=>Object.fromEntries(CNT.map(k=>[k,p[k]||0]));
 const STAT_ON0=['brk','best','attacks','foreign','own','luck','err','fouls','time'];
 const STAT_ALL=['brk','best','attacks','foreign','own','luck','made','pct','err','saf','fouls','time','misses','shots','frames','fpts'];
@@ -683,7 +691,7 @@ const DEF=()=>({cfg:null,title:'Кубок клуба',subtitle:'Финал',rac
   players:[blankP('Игрок 1'),blankP('Игрок 2')],turn:0,series:0,
   clock:{running:true,start:Date.now(),acc:0},shotExt:0,mclock:{running:false,start:Date.now(),acc:0},
   shot:{mode:'down',limit:45,ext:30,extN:1},fs:null,lastFrame:null,updatedAt:0,
-  game:'classic',foulBall:false,
+  game:'classic',foulBall:false,pairs:false,sub:[0,0],
   log:[],base0:null,frameLog:[],pclock:{running:false,start:Date.now(),acc:0},pdur:300000,lt:null,fhPop:null,win:null,winShown:false});
 const clone=o=>JSON.parse(JSON.stringify(o));
 function norm(s){
@@ -704,6 +712,7 @@ function norm(s){
     o.log=[]; o.base0={pl:o.players.map(p=>Object.assign(counters(p),{frames:p.frames,balls:p.balls,best:p.best,extUsed:p.extUsed||0})),turn:o.turn,at:o.fs.at||0};
   }
   if(!o.base0) o.base0=zeroBase();
+  if(!Array.isArray(o.vis)){ o.vis=[-1,-1]; o.vis[o.turn]=0; } if(!Array.isArray(o.sub)) o.sub=[0,0];
   return o;
 }
 let S, hist=[], ready=false, lastRev=0;
@@ -800,7 +809,7 @@ function shotInfo(){
 
 /* ---- журнал действий: весь матч пересчитывается из списка событий ---- */
 const SHOTS=['foreign','own','luck','miss','safety','foul'];
-const EVN={foreign:'Чужой',own:'Свой',luck:'Случайный',miss:'Промах',safety:'Отыгрыш',foul:'Штраф','frame+':'+ Партия','frame-':'− Партия','ball+':'Шар +1','ball-':'Шар −1',ext:'Продление',turn:'Передача хода',reset:'Сброс статистики',rack:'Разбой (новая стойка)'};
+const EVN={sub:'Смена игрока пары',foreign:'Чужой',own:'Свой',luck:'Случайный',miss:'Промах',safety:'Отыгрыш',foul:'Штраф','frame+':'+ Партия','frame-':'− Партия','ball+':'Шар +1','ball-':'Шар −1',ext:'Продление',turn:'Передача хода',reset:'Сброс статистики',rack:'Разбой (новая стойка)'};
 function zeroBase(){return {pl:[0,1].map(()=>Object.assign(counters({}),{frames:0,balls:0,best:0,extUsed:0})),turn:0,at:0}}
 function endFrameS(X,w,mt){
   const [A,B]=X.players, dur=Math.max(0,mt-X.fs.at);
@@ -809,12 +818,14 @@ function endFrameS(X,w,mt){
   X.players.forEach(q=>{q.balls=0;q.extUsed=0});
   X.series=0; X.fs=newFs(X.players,mt);
 }
+// пары: каждый раз, когда пара получает ход, к столу выходит следующий партнёр
+function recvTurn(X,j){ if(!X.vis) X.vis=[-1,-1]; if(!X.sub) X.sub=[0,0]; X.vis[j]=(X.vis[j]??-1)+1; X.sub[j]=X.vis[j]%2; }
 function applyEv(X,e){
   const i=e.i, p=X.players[i], t=e.t; if(!p) return;
-  const pass=()=>{X.turn=1-i;X.series=0};
+  const pass=()=>{X.turn=1-i;X.series=0;recvTurn(X,1-i)};
   const long=(e.lg??(X.game==='long'?1:0))===1, o=X.players[1-i];
   if(SHOTS.includes(t)){
-    if(X.turn!==i){X.turn=i;X.series=0}
+    if(X.turn!==i){X.turn=i;X.series=0;recvTurn(X,i)}
     p.time+=e.pr||0; p.shots++;
     const pot=t==='foreign'||t==='own'||t==='luck';
     if(!X.fs.brk){ p.breaks++; if(pot) p.breaksOk++; X.fs.brk={i,ok:pot}; }
@@ -837,11 +848,12 @@ function applyEv(X,e){
   else if(t==='ball+') p.balls++;
   else if(t==='ball-') p.balls=Math.max(0,p.balls-1);
   else if(t==='ext') p.extUsed++;
-  else if(t==='turn'){ X.turn=i; X.series=0; }
+  else if(t==='turn'){ if(X.turn!==i) recvTurn(X,i); X.turn=i; X.series=0; }
+  else if(t==='sub'){ X.vis[i]=(X.vis[i]??0)+1; X.sub[i]=1-(X.sub[i]||0); }
   else if(t==='rack'){ // длинная пирамида: пирамиду собрали заново — новая стойка, следующий удар считается разбоем
     const [A,B]=X.players, sc=X.fs.sc||[0,0], pa=A.frames-sc[0], pb=B.frames-sc[1], dur=Math.max(0,(e.mt||0)-X.fs.at);
     if(X.fs.brk||pa||pb){ X.lastFrame={n:X.rack||1,p:frameStats(X),dur,brk:X.fs.brk}; X.frameLog.push({w:pa>pb?0:pb>pa?1:-1,a:pa,b:pb,dur}); }
-    X.rack=(X.rack||1)+1; X.fs=newFs(X.players,e.mt||0); X.turn=i; X.series=0;
+    X.rack=(X.rack||1)+1; X.fs=newFs(X.players,e.mt||0); if(X.turn!==i) recvTurn(X,i); X.turn=i; X.series=0;
   }
   else if(t==='reset'){ X.players.forEach(q=>{CNT.forEach(k=>q[k]=0);q.best=0}); X.series=0; X.fs=newFs(X.players,e.mt||0); X.lastFrame=null; }
 }
@@ -849,6 +861,7 @@ function replay(X,cb){
   const b=X.base0||zeroBase();
   X.players.forEach((p,k)=>Object.assign(p,clone(b.pl[k])));
   X.turn=b.turn||0; X.series=0; X.frameLog=[]; X.lastFrame=null; X.fs=newFs(X.players,b.at||0); X.rack=1;
+  X.vis=[-1,-1]; X.vis[X.turn]=0; X.sub=[0,0];
   X.log.forEach((e,k)=>{ if(cb) cb(e,k,X); applyEv(X,e); });
 }
 function ev(t,i,pre){
@@ -988,7 +1001,17 @@ function setNum(c,k,key,v){
   if(!el||el._v===v) return; el._v=v; el.innerHTML=n.html;
   if(n.chg){ el.classList.remove('chg'); void el.offsetWidth; el.classList.add('chg'); }
 }
+const surn=n=>{ const w=String(n||'').trim().split(/\s+/); return w[0]||''; };   // «Фамилия Имя» → «Фамилия»
+const isPair=()=>!!S.pairs;
+const curM=i=>isPair()?(S.sub&&S.sub[i])||0:0;                                  // кто из пары сейчас бьёт
+function teamName(p,full){ if(!isPair()||!p.name2) return p.name; return full?`${p.name} / ${p.name2}`:`${surn(p.name)} / ${surn(p.name2)}`; }
+function teamHTML(i){ const p=S.players[i]; if(!isPair()||!p.name2) return esc(p.name);
+  const c=curM(i), on=S.turn===i&&winner()<0; // у пары, которая у стола: бьющий ярко, партнёр приглушён
+  return [surn(p.name),surn(p.name2)].map((n,k)=>`<span class="${on?(k===c?'pc':'po'):''}">${esc(n)}</span>`).join(`<span class="${on?'po':''}"> / </span>`); }
+const mPhoto=(p,i)=>curM(i)&&isPair()&&p.name2?p.photo2:p.photo;
+const mBody=(p,i)=>curM(i)&&isPair()&&p.name2?(p.body2||''):p.body;
 function fullHTML(p,side){
+  if(isPair()) p=Object.assign({},p,{photo:mPhoto(p,side==='a'?0:1),body:mBody(p,side==='a'?0:1)});
   const f=S.cfg.flags?flag(p.country,'flag fbig'):'';
   if(p.body) return `<img class="body" src="${esc(p.body)}" alt="">${f}`;
   if(p.photo) return `<div class="ava"><img src="${esc(p.photo)}" alt=""></div>${f}`;
@@ -1019,15 +1042,16 @@ function statCard(kind){
     else { Q=cur; clk='<span data-fc></span>'; label=`Статистика ${isLong()?(S.rack||1):A.frames+B.frames+1}-й ${unit}`; }
   } else { Q=matchStats(); clk='<span data-mc></span>'; label='Статистика встречи'; }
   const rows=statRows(Q,isF), rh=Math.max(40,Math.min(64,Math.floor(700/Math.max(1,rows.length))-5));
-  const nm=p=>`<div class="n">${S.cfg.flags?flag(p.country):''}<span class="fitx">${esc(p.name)}</span></div>`;
+  const nm=p=>`<div class="n">${S.cfg.flags?flag(p.country):''}<span class="fitx">${esc(teamName(p))}</span></div>`;
   return hdHTML()+`<div class="vsrow">${nm(A)}<div class="s">${A.frames}</div><div class="c">${clk}</div><div class="s">${B.frames}</div>${nm(B)}</div>
     <div class="sec fitt">${label}</div>${rowsHTML(rows,rh)}`;
 }
 const INFO=[['city','Город'],['age','Возраст'],['height','Рост'],['rank','Звание'],['club','Клуб'],['cue','Кий']];
 function vsCard(){
   const [A,B]=S.players;
-  const rows=INFO.filter(([k])=>A.info[k]||B.info[k]).map(([k,l])=>[A.info[k]||'—',l,B.info[k]||'—',null]);
-  const nm=p=>`<div class="n">${S.cfg.flags?flag(p.country):''}<span class="fitx">${esc(p.name)}</span></div>`;
+  const rows=isPair()?[[A.name,'1-й игрок',B.name,null],[A.name2||'—','2-й игрок',B.name2||'—',null]]
+    :INFO.filter(([k])=>A.info[k]||B.info[k]).map(([k,l])=>[A.info[k]||'—',l,B.info[k]||'—',null]);
+  const nm=p=>`<div class="n">${S.cfg.flags?flag(p.country):''}<span class="fitx">${esc(teamName(p))}</span></div>`;
   return hdHTML()+`<div class="vsrow vs" style="margin-top:14px">${nm(A)}<div class="c vs">VS</div>${nm(B)}</div><div style="height:16px"></div>${rows.length?rowsHTML(rows,68):'<div style="height:10px"></div>'}`;
 }
 function sponsCard(){
@@ -1037,6 +1061,7 @@ function sponsCard(){
     <div class="spgrid">${L.map((u,i)=>`<div class="sptile" data-spt="${i}" style="--d:${(0.5+i*0.15).toFixed(2)}s"><img src="${esc(u)}" alt=""></div>`).join('')}</div>`;
 }
 function picHTML(p,side){
+  if(isPair()) p=Object.assign({},p,{photo:mPhoto(p,side==='a'?0:1)});
   const f=S.cfg.flags&&FLAGS[p.country]&&FLAGS[p.country][1];
   if(!S.cfg.photos) return f?flag(p.country,'flag flagbg'):'';
   if(p.photo) return `<img src="${esc(p.photo)}" alt="">${f?flag(p.country,'flag fb'):''}`;
@@ -1048,7 +1073,7 @@ function nameHTML(i){
   if(w===i) sub='<em class="w">Победа</em>'; else if(turn&&!S.fs.brk) sub='<em class="br">разбой</em>'; else if(turn&&S.series>1) sub=`<em>серия ${S.series}</em>`;
   let ex='';
   if(S.cfg.timer&&S.shot.mode==='down'&&S.shot.extN>0&&w<0) ex=`<span class="ex">${Array.from({length:S.shot.extN},(_,k)=>`<b class="${k<p.extUsed?'u':''}">+${S.shot.ext}</b>`).join('')}</span>`;
-  return `<span class="t fitx">${esc(p.name)}</span>${turn?'<i class="dot"></i>':''}${sub}<span class="sp"></span>${ex}`;
+  return `<span class="t ${isPair()?'fitt':'fitx'}">${teamHTML(i)}</span>${turn?'<i class="dot"></i>':''}${sub}<span class="sp"></span>${ex}`;
 }
 function ballsHTML(c,i){
   const p=S.players[i], n=S.ballsTo; if(!S.cfg.balls||n<=0||isLong()) return '';
@@ -1071,7 +1096,7 @@ function fhHTML(c){
 function breakHTML(){
   const C=S.cfg, [A,B]=S.players;
   const lg=C.logo?`<img src="${esc(C.logo)}" alt="">`:'';
-  const nm=(p,r)=>`<div class="n">${r?'':(C.flags?flag(p.country):'')}<span class="fitx">${esc(p.name)}</span>${r&&C.flags?flag(p.country):''}</div>`;
+  const nm=(p,r)=>`<div class="n">${r?'':(C.flags?flag(p.country):'')}<span class="fitx">${esc(teamName(p))}</span>${r&&C.flags?flag(p.country):''}</div>`;
   return `<div class="brk-lg rv" style="--d:.15s">${lg}</div>
     <div class="brk-t rv fitt" style="--d:.3s">${esc(C.pTitle||'Перерыв')}</div>
     <div class="brk-s rv" style="--d:.45s" data-pst></div>
@@ -1087,15 +1112,15 @@ const winTitle=()=>String(S.cfg.winTitle||'').trim()||'Победитель ма
 function winnerHTML(){
   const C=S.cfg, w=winner();
   if(w<0) return {ph:'',r:`<div class="win-t rv" style="--d:.3s">Матч ещё идёт</div><div class="win-m rv" style="--d:.45s">Экран заполнится после последней партии</div>`};
-  const P=S.players[w], O=S.players[1-w], W=S.win&&S.win.name===P.name?S.win:null;
+  const P=S.players[w], O=S.players[1-w], W=S.win&&S.win.name===teamName(P,true)?S.win:null;
   const ph=P.body?`<img class="body" src="${esc(P.body)}" alt="">`:P.photo?`<div class="ava"><img src="${esc(P.photo)}" alt=""></div>`:SILB;
   const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—', avg=(t,n)=>n?Math.round(t/n/1000)+' сек':'—';
   const tiles=W?[[`${W.w} из ${W.m}`,'Побед в турнире'],[`${W.fw}:${W.fl}`,isLong()?'Очки':'Партии'],[W.made,'Забито шаров'],[W.best,'Лучшая серия'],[pct(W.pot,W.att),'Реализация'],[avg(W.time,W.shots),'Ср. время подготовки']]
     :[[`${P.frames}:${O.frames}`,isLong()?'Счёт':'Партии'],[made(P),'Забито шаров'],[P.best,'Лучшая серия'],[pct(P.foreign+P.own,P.attacks),'Реализация'],[P.breaks?`${P.breaksOk}/${P.breaks}`:'—','Начальный удар'],[avg(P.time,P.shots),'Ср. время подготовки']];
   const r=`<div class="win-cup rv fitt" style="--d:.3s">${esc(S.title)}${S.subtitle?' · '+esc(S.subtitle):''}</div>
     <div class="win-t rv" style="--d:.45s">${esc(winTitle())}</div>
-    <div class="win-n rv" style="--d:.65s">${C.flags?flag(P.country):''}<span class="fitx">${esc(P.name)}</span></div>
-    <div class="win-m rv" style="--d:.8s">Счёт <b>${P.frames}:${O.frames}</b> · соперник: ${esc(O.name)}</div>
+    <div class="win-n rv" style="--d:.65s">${C.flags?flag(P.country):''}<span class="fitx">${esc(teamName(P))}</span></div>
+    <div class="win-m rv" style="--d:.8s">Счёт <b>${P.frames}:${O.frames}</b> · ${isPair()?'соперники':'соперник'}: ${esc(teamName(O))}</div>
     <div class="win-sub rv" style="--d:.95s">${W?`Статистика за турнир · матчей: ${W.m}`:'Статистика матча'}</div>
     <div class="win-g">${tiles.map(([v,l],k)=>`<div class="wt rv" style="--d:${(1.05+k*.12).toFixed(2)}s"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</div>`;
   return {ph,r};
@@ -1127,7 +1152,7 @@ function sparks(c,on){
 }
 /* ---- турнирная сетка ---- */
 let BR=null, brT=0;
-const normN=s=>String(s||'').toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ').trim();
+const normN=s=>String(s||'').toLowerCase().replace(/ё/g,'е').replace(/\s*\/\s*/g,'/').replace(/\s+/g,' ').trim();
 function loadBracket(){
   brT=Date.now();
   return fetch('/api/bracket',{cache:'no-store'}).then(r=>r.json()).then(j=>{ BR=j; if(S) renderAll(); fillBrPick(); }).catch(()=>{});
@@ -1153,7 +1178,7 @@ function bracketHTML(){
   if(!V) return '<div class="brempty">Сетка не загружена — загрузите Excel на главной странице во вкладке «Сетка»</div>';
   const R=V.R, W=1840, top=56, areaH=924-top-18, colW=(W-40)/R.length, bw=Math.min(380,colW-46);
   const n0=Math.max(1,R[0].matches.length), bh=Math.max(40,Math.min(100,areaH/n0*.8)), bf=Math.max(14,Math.min(26,bh*.34));
-  const live=[normN(S.players[0].name),normN(S.players[1].name)];
+  const live=[normN(teamName(S.players[0],true)),normN(teamName(S.players[1],true))];
   const pos=R.map((r,j)=>{ const sl=areaH/Math.max(1,r.matches.length); return r.matches.map((m,k)=>({x:20+j*colW+(colW-bw)/2,y:top+sl*(k+.5)})); });
   const rname=r=>(r.name||'Раунд').replace(/^раунд\s*-\s*/i,'')+(r.side==='lower'?' · нижняя':'');
   let lines='', html=R.map((r,j)=>`<div class="rnd fitt" style="left:${(20+j*colW).toFixed(1)}px;width:${colW.toFixed(1)}px">${esc(rname(r))}</div>`).join('');
@@ -1198,7 +1223,7 @@ function updSide(c){
   [[A,'A',0],[B,'B',1]].forEach(([p,k,i])=>{
     c.querySelector(`[data-k="sd${k}"]`).classList.toggle('on',S.turn===i&&w<0);
     setK(c,'sdF'+k,C.flags?flag(p.country,''):'');
-    setK(c,'sdN'+k,esc(p.name));
+    setK(c,'sdN'+k,teamHTML(i)); const ne=c.querySelector(`[data-k="sdN${k}"]`); ne.classList.toggle('fitx',!isPair()); ne.classList.toggle('fitt',isPair());
     setK(c,'sdB'+k,w===i?'<span class="w">победа</span>':(!isLong()&&C.balls&&S.ballsTo>0?`${p.balls} ш.`:(S.turn===i&&S.series>1?`серия ${S.series}`:'')));
     setNum(c,'sdS'+k,'sdS'+k,p.frames);
     c.querySelector(`[data-k="sdS${k}"]`).classList.toggle('w3',p.frames>99);
@@ -1267,14 +1292,14 @@ function fitText(root){
     el.style.fontSize=''; if(!over(el)) return;
     const fs0=parseFloat(getComputedStyle(el).fontSize); shrink(el,fs0,fs0*.45);
   });
-  // имена: уменьшаем, а если не хватает — «Константин Константинопольский» → «К. Константинопольский»
+  // имена: уменьшаем, а если не хватает — «Фамилия Имя» → «Фамилия И.» (как в сетках bill4you)
   root.querySelectorAll('.fitx').forEach(el=>{
     if(el.dataset.full) el.textContent=el.dataset.full;
     el.style.fontSize=''; if(!over(el)) return;
-    const fs0=parseFloat(getComputedStyle(el).fontSize), min=fs0*.6;
+    const fs0=parseFloat(getComputedStyle(el).fontSize), min=fs0*(el.textContent.includes('/')?.45:.6);
     shrink(el,fs0,min);
     const w=el.textContent.trim().split(/\s+/);
-    if(over(el)&&w.length>1&&!/\d/.test(el.textContent)){ el.dataset.full=el.textContent; el.textContent=w[0][0]+'. '+w.slice(1).join(' '); shrink(el,fs0,min); }
+    if(over(el)&&w.length>1&&!/[\d\/]/.test(el.textContent)){ el.dataset.full=el.textContent; el.textContent=w[0]+' '+w.slice(1).map(x=>x[0]+'.').join(' '); shrink(el,fs0,min); }
   });
 }
 function fit(container){
@@ -1292,13 +1317,14 @@ function panelCol(i){
   const p=S.players[i], c=i?'b':'a', left=S.shot.extN-p.extUsed;
   const extBtn=S.shot.mode==='down'&&S.shot.extN>0?`<button class="ab ext" data-ext="${i}" ${left>0?'':'disabled'}>Продление +${S.shot.ext}<small>осталось ${Math.max(0,left)} из ${S.shot.extN}</small></button>`:'<span></span>';
   return `<div class="card2 pcol ${c} ${S.turn===i?'on':''}">
-    <h2><span>${esc(p.name)}</span><span class="fbig2">${p.frames}<small>${isLong()?` из ${S.raceTo} · штрафных ${p.fpts||0}`:` партии · ${p.balls} ш.`}</small></span></h2>
+    <h2><span>${esc(teamName(p))}${isPair()&&p.name2?`<small style="display:block;font:500 14px 'Roboto Condensed';color:#c9a14a;text-transform:none">бьёт: ${esc(curM(i)?p.name2:p.name)}</small>`:''}</span><span class="fbig2">${p.frames}<small>${isLong()?` из ${S.raceTo} · штрафных ${p.fpts||0}`:` партии · ${p.balls} ш.`}</small></span></h2>
     <div class="btns">
       <button class="ab pot" data-a="foreign" data-i="${i}">Чужого<small>прицельный</small></button>
       <button class="ab own" data-a="own" data-i="${i}">Своего<small>свояк</small></button>
       <button class="ab luck" data-a="luck" data-i="${i}">Случайный<small>не по заказу</small></button>
       <button class="ab miss" data-a="miss" data-i="${i}">Промах<small>атака мимо</small></button>
       <button class="ab saf" data-a="safety" data-i="${i}">Отыгрыш<small>ход сопернику</small></button>
+      ${isPair()?`<button class="ab miss" style="grid-column:span 3;min-height:42px" data-sub="${i}">⇄ Сменить игрока пары (сейчас бьёт ${esc(surn(curM(i)?p.name2:p.name))})</button>`:''}
       <button class="ab foul" data-a="foul" data-i="${i}">Штраф<small>${isLong()||S.foulBall?'+1 сопернику, ход ему':'ход сопернику'}</small></button>
       ${isLong()?`<div class="fix"><button class="ab miss" data-f="-1" data-i="${i}">Очко −1</button><button class="ab miss" data-f="1" data-i="${i}">Очко +1</button><span></span></div><button class="ab frame" data-rack="${i}">Разбой<small>${S.fs.brk?'собрали пирамиду — разбивает '+esc(short(p.name)):'следующий удар — разбой'}</small></button>`
       :`<div class="fix"><button class="ab miss" data-b="-1" data-i="${i}">Шар −1</button><button class="ab miss" data-b="1" data-i="${i}">Шар +1</button><button class="ab miss" data-f="-1" data-i="${i}">Партия −1</button></div>
@@ -1337,6 +1363,9 @@ function syncFields(force){
   document.querySelectorAll('#scrSeg [data-v=frame]').forEach(b=>b.textContent=isLong()?'Стойка':'Партия');
   set('fShotMode',S.shot.mode); set('fLimit',S.shot.limit); set('fExt',S.shot.ext); set('fExtN',S.shot.extN); set('fSpInt',S.cfg.spInt);
   set('fNameA',S.players[0].name); set('fNameB',S.players[1].name);
+  set('fNameA2',S.players[0].name2); set('fNameB2',S.players[1].name2); $('fPairs').checked=isPair();
+  document.querySelectorAll('.pairf').forEach(e=>e.style.display=isPair()?'':'none');
+  ['thA2','thB2'].forEach((id,i)=>$(id).style.backgroundImage=S.players[i].photo2?`url('${S.players[i].photo2}')`:'');
   set('fPDur',Math.round(S.pdur/6000)/10); set('fPTitle',S.cfg.pTitle); set('fPSub',S.cfg.pSub); set('fPEnd',S.cfg.pEnd);
   set('fTkLabel',S.cfg.tkLabel); set('fTkSpeed',S.cfg.tkSpeed); set('fTk',S.cfg.tk); set('fLtDur',S.cfg.ltDur); set('fWinTitle',S.cfg.winTitle); set('fFhDur',S.cfg.fhDur||8);
   const pb=$('thPBg'); if(pb){ pb.style.backgroundImage=S.cfg.pBg&&S.cfg.pBgKind!=='video'?`url('${S.cfg.pBg}')`:''; pb.textContent=S.cfg.pBgKind==='video'?'🎬':''; pb.style.display='grid'; pb.style.placeItems='center'; }
@@ -1348,7 +1377,7 @@ function renderAll(external){
   if(isOverlay()){ updateStage($('ovWrap')); return; }
   updateStage($('pv'));
   $('pcols').innerHTML=panelCol(0)+panelCol(1);
-  $('turnA').textContent='▶ '+S.players[0].name; $('turnB').textContent=S.players[1].name+' ◀';
+  $('turnA').textContent='▶ '+teamName(S.players[0]); $('turnB').textContent=teamName(S.players[1])+' ◀';
   $('turnA').classList.toggle('act',S.turn===0); $('turnB').classList.toggle('act',S.turn===1);
   document.querySelectorAll('#scrSeg button').forEach(b=>b.classList.toggle('act',b.dataset.v===S.screen));
   document.querySelectorAll('#bgSeg button').forEach(b=>b.classList.toggle('act',b.dataset.v===S.bg));
@@ -1375,9 +1404,9 @@ function loadPlayers(){
   fetch('/api/players').then(r=>r.ok?r.json():[]).then(list=>{ PLAYERS=list||[]; fillPickers(); }).catch(()=>{});
 }
 function fillPickers(){
-  ['pickA','pickB'].forEach((id,i)=>{
+  ['pickA','pickB','pickA2','pickB2'].forEach((id,k)=>{ const i=k%2, f=k>1?'playerId2':'playerId';
     const el=$(id); if(!el) return;
-    const cur=S.players[i].playerId||'';
+    const cur=S.players[i][f]||'';
     el.innerHTML='<option value="">— выбрать из базы игроков —</option>'+PLAYERS.map(p=>`<option value="${esc(p.id)}" ${p.id===cur?'selected':''}>${esc(p.name)}</option>`).join('');
   });
 }
@@ -1450,6 +1479,7 @@ document.addEventListener('click',e=>{
   else if(b.dataset.f) frame(+b.dataset.i,+b.dataset.f);
   else if(b.dataset.b) ball(+b.dataset.i,+b.dataset.b);
   else if(b.dataset.ext!=null) extend(+b.dataset.ext);
+  else if(b.dataset.sub!=null) ev('sub',+b.dataset.sub);
   else if(b.dataset.rack!=null){ ev('rack',+b.dataset.rack); toast('Новая стойка '+S.rack+': разбивает '+S.players[+b.dataset.rack].name); }
   else if(b.dataset.up!=null||b.dataset.dn!=null){ const i=+(b.dataset.up??b.dataset.dn), j=b.dataset.up!=null?i-1:i+1, L=S.cfg.stats; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; save(); renderCfg(true); }
   else if(b.dataset.clr!=null){snap();S.players[+b.dataset.clr][b.dataset.kind]='';save();}
@@ -1510,6 +1540,12 @@ bind('fExt',v=>S.shot.ext=Math.max(0,parseInt(v)||0));
 bind('fExtN',v=>S.shot.extN=Math.max(0,Math.min(10,parseInt(v)||0)));
 bind('fSpInt',v=>S.cfg.spInt=Math.max(3,parseInt(v)||8));
 bind('fNameA',v=>{S.players[0].name=v;S.players[0].playerId=null}); bind('fNameB',v=>{S.players[1].name=v;S.players[1].playerId=null});
+bind('fNameA2',v=>{S.players[0].name2=v;S.players[0].playerId2=null}); bind('fNameB2',v=>{S.players[1].name2=v;S.players[1].playerId2=null});
+$('fPairs').onchange=e=>{ snap(); S.pairs=e.target.checked; replay(S); save(); toast(S.pairs?'Парная игра: впишите партнёров в «Настройках матча»':'Одиночная игра'); };
+['pickA2','pickB2'].forEach((id,i)=>$(id).addEventListener('change',e=>{
+  const pl=PLAYERS.find(p=>p.id===e.target.value); if(!pl) return;
+  snap(); const p=S.players[i]; p.name2=pl.name; p.playerId2=pl.id; p.photo2=pl.photoId?'/photos/'+pl.photoId+'.jpg':''; p.body2=pl.bodyId?'/photos/'+pl.bodyId+'.jpg':''; save();
+}));
 bind('fCtA',v=>S.players[0].country=v,'change'); bind('fCtB',v=>S.players[1].country=v,'change');
 ['pickA','pickB'].forEach((id,i)=>$(id).addEventListener('change',e=>{
   const pl=PLAYERS.find(p=>p.id===e.target.value); if(!pl) return;
@@ -1562,7 +1598,7 @@ $('saveMatch').onclick=()=>{
   const b=$('saveMatch'), txt='💾 Сохранить матч в историю';
   if(!saveArmed){ saveArmed=true; b.classList.add('arm'); b.textContent='Сохранить и начать новый?'; setTimeout(()=>{saveArmed=false;b.classList.remove('arm');b.textContent=txt},3000); return; }
   saveArmed=false; b.classList.remove('arm'); b.textContent=txt;
-  fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:TABLE,state:wire()})})
+  fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:TABLE,state:Object.assign(wire(),{players:S.players.map(p=>Object.assign({},p,{name:teamName(p,true)}))})})})
     .then(r=>{ if(!r.ok) throw 0; return r.json(); })
     .then(()=>{ snap(); freshMatch(); S.screen='bug'; save(); toast('Матч сохранён в историю'); })
     .catch(()=>toast('Не удалось сохранить матч',true));
@@ -1610,11 +1646,11 @@ async function computeWin(){
   const w=winner(); if(w<0) return;
   const P=S.players[w], O=S.players[1-w], T=normN(S.title);
   let list=[]; try{ const r=await fetch('/api/matches'); if(r.ok) list=await r.json(); }catch(_){}
-  const g={name:P.name,m:0,w:0,fw:0,fl:0,made:0,best:0,att:0,pot:0,time:0,shots:0};
+  const g={name:teamName(P,true),m:0,w:0,fw:0,fl:0,made:0,best:0,att:0,pot:0,time:0,shots:0};
   const add=(me,op,won)=>{ g.m++; if(won) g.w++; g.fw+=me.frames||0; g.fl+=op.frames||0; g.made+=(me.foreign||0)+(me.own||0)+(me.luck||0);
     g.best=Math.max(g.best,me.best||0); g.att+=me.attacks||0; g.pot+=(me.foreign||0)+(me.own||0); g.time+=me.time||0; g.shots+=me.shots||0; };
   for(const m of list){ if(normN(m.title)!==T) continue;
-    const k=m.players.findIndex(x=>(P.playerId&&x.playerId===P.playerId)||normN(x.name)===normN(P.name)); if(k<0) continue;
+    const k=m.players.findIndex(x=>(!isPair()&&P.playerId&&x.playerId===P.playerId)||normN(x.name)===normN(teamName(P,true))); if(k<0) continue;
     add(m.players[k],m.players[1-k],m.winner===k); }
   add(P,O,true);
   if(winner()!==w) return;
@@ -1632,7 +1668,9 @@ function fillBrPick(){
 $('pickBr').onchange=e=>{
   const [ri,k]=e.target.value.split(':').map(Number); const r=BR&&BR.rounds[ri], m=r&&r.matches[k]; if(!m) return;
   snap();
-  [m.a,m.b].forEach((n,i)=>{ const p=S.players[i], pl=PLAYERS.find(x=>normN(x.name)===normN(n));
+  [m.a,m.b].forEach((n,i)=>{ const p=S.players[i], pr=String(n).split(/\s*\/\s*/);
+    if(isPair()&&pr.length>1){ n=pr[0]; p.name2=pr.slice(1).join(' / '); const pl2=PLAYERS.find(x=>normN(x.name)===normN(p.name2)); p.playerId2=pl2?pl2.id:null; p.photo2=pl2&&pl2.photoId?'/photos/'+pl2.photoId+'.jpg':''; p.body2=pl2&&pl2.bodyId?'/photos/'+pl2.bodyId+'.jpg':''; }
+    const pl=PLAYERS.find(x=>normN(x.name)===normN(n));
     p.name=n; p.playerId=pl?pl.id:null; p.photo=pl&&pl.photoId?'/photos/'+pl.photoId+'.jpg':''; p.body=pl&&pl.bodyId?'/photos/'+pl.bodyId+'.jpg':'';
     p.country=(pl&&pl.country)||(i?m.cb:m.ca)||p.country||'ru'; p.info={}; if(pl) INFO.forEach(([q])=>{ if(pl[q]) p.info[q]=pl[q] }); });
   if(r.name) S.subtitle=r.name.replace(/^раунд\s*-\s*/i,'')+(r.side==='lower'?' · нижняя сетка':'');
@@ -1682,9 +1720,9 @@ $('cFrame').onclick=e=>{ const b=e.currentTarget; if(!cfArm){ cfArm=true; b.text
 function renderCompact(){
   if(!document.body.classList.contains('compact')) return;
   const cp=(i)=>{ const p=S.players[i]; const el=$(i?'cpB':'cpA'); el.classList.toggle('on',S.turn===i);
-    el.innerHTML=`<div class="n">${esc(p.name)}</div><div class="f">${p.frames}<small>${isLong()?'из '+S.raceTo:p.balls+' ш.'}</small></div>`; };
+    el.innerHTML=`<div class="n">${esc(teamName(p))}</div><div class="f">${p.frames}<small>${isLong()?'из '+S.raceTo:p.balls+' ш.'}</small></div>`; };
   cp(0); cp(1);
-  const t=S.players[S.turn]; $('cWho').innerHTML=`▶ ${esc(t.name)}${S.series>1?` · серия ${S.series}`:''}`;
+  const t=S.players[S.turn]; $('cWho').innerHTML=`▶ ${esc(isPair()&&t.name2?(curM(S.turn)?t.name2:t.name):t.name)}${S.series>1?` · серия ${S.series}`:''}`;
   const left=S.shot.extN-t.extUsed; const ce=$('cExt'); ce.textContent=`+${S.shot.ext} (${Math.max(0,left)})`; ce.disabled=S.shot.mode!=='down'||left<=0;
   $('cPause').textContent=S.clock.running?'⏸ Таймер':'▶ Таймер';
   $('cScr').value=S.screen;
