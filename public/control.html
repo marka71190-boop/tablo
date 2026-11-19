@@ -617,7 +617,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
   <details class="card2 set">
     <summary>Победитель и история партий</summary>
     <div class="fields">
-      <label class="full2">Надпись на экране победителя<input id="fWinTitle" placeholder="Победитель турнира"></label>
+      <label class="full2">Надпись на экране победителя<input id="fWinTitle" placeholder="Победитель матча"></label>
     </div>
     <div class="chks">
       <label class="chk"><input type="checkbox" data-cfg="autoWin"> Показывать экран победителя сразу после последней партии</label>
@@ -677,7 +677,7 @@ const DEFCFG=()=>({v:2,stats:STAT_ALL.map(id=>({id,on:STAT_ON0.includes(id),labe
   photos:true,flags:true,title:true,timer:true,mclock:true,balls:true,acc:'#c9a14a',logo:'',sponsors:[],spInt:8,spBug:true,
   tkOn:false,tk:'',tkLabel:'Новости',tkSpeed:110,people:[],ltDur:6,
   pTitle:'Перерыв',pSub:'Продолжение через',pEnd:'Скоро продолжим',pBg:'',pBgKind:'',pScore:true,pSpons:true,
-  winTitle:'Победитель турнира',autoWin:true,fhist:true,brFrom:0,brSide:'all',brPage:0,sidePos:'tl',spLight:true});
+  winTitle:'Победитель матча',wt2:true,autoWin:true,fhist:true,brFrom:0,brSide:'all',brPage:0,sidePos:'tl',spLight:true});
 const newFs=(players,at)=>({base:players.map(counters),at:at||0,best:[0,0],brk:null,sc:players.map(p=>p.frames||0)});
 const DEF=()=>({cfg:null,title:'Кубок клуба',subtitle:'Финал',raceTo:5,ballsTo:8,screen:'bug',bg:'transparent',
   players:[blankP('Игрок 1'),blankP('Игрок 2')],turn:0,series:0,
@@ -693,6 +693,7 @@ function norm(s){
   o.cfg=Object.assign(dc,old.v===2?old:{logo:old.logo||'',sponsors:old.sponsors||[]});
   const have=new Set(o.cfg.stats.map(x=>x.id)); dc.stats.forEach(x=>{ if(!have.has(x.id)) o.cfg.stats.push(x) });
   o.cfg.stats=o.cfg.stats.filter(x=>STATDEF[x.id]);
+  if(!o.cfg.wt2){ if(!o.cfg.winTitle||o.cfg.winTitle==='Победитель турнира') o.cfg.winTitle='Победитель матча'; o.cfg.wt2=true; } // старая надпись по умолчанию
   o.shot=Object.assign(DEF().shot,s.shot||{});
   o.players=[0,1].map(i=>{const p=Object.assign(blankP('Игрок '+(i+1)),(s.players||[])[i]||{}); p.info=p.info||{}; return p});
   if(!o.fs||!o.fs.base) o.fs=newFs(o.players,0);
@@ -1082,7 +1083,7 @@ function breakBg(){
   return C.pBgKind==='video'?`<video src="${esc(C.pBg)}" autoplay muted loop playsinline></video>`:`<img src="${esc(C.pBg)}" alt="">`;
 }
 /* ---- победитель ---- */
-const winTitle=()=>{ const t=String(S.cfg.winTitle||'').trim(); return !t||/матч/i.test(t)?'Победитель турнира':t; };
+const winTitle=()=>String(S.cfg.winTitle||'').trim()||'Победитель матча';
 function winnerHTML(){
   const C=S.cfg, w=winner();
   if(w<0) return {ph:'',r:`<div class="win-t rv" style="--d:.3s">Матч ещё идёт</div><div class="win-m rv" style="--d:.45s">Экран заполнится после последней партии</div>`};
