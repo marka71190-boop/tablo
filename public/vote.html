@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кто победит? · Голосование</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Roboto Condensed',system-ui,sans-serif;background:radial-gradient(ellipse at 50% 0%,#1f4a34,#070b0a 70%);color:#f1ead6;min-height:100vh;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}
+.wrap{max-width:520px;margin:0 auto}
+.tt{font:500 15px Oswald;letter-spacing:3px;text-transform:uppercase;color:#c9a14a;text-align:center}
+h1{font:700 40px/1.1 Oswald;text-transform:uppercase;text-align:center;margin:6px 0 4px;letter-spacing:2px}
+.sub{text-align:center;color:#aab4cb;font-size:15px;margin-bottom:18px}
+.p{position:relative;display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:14px;align-items:center;width:100%;padding:12px;margin-bottom:12px;background:#151917;border:2px solid #2b3330;border-radius:16px;color:inherit;text-align:left;font:inherit;cursor:pointer;overflow:hidden}
+.p:disabled{cursor:default}
+.p.mine{border-color:#c9a14a;box-shadow:0 0 30px rgba(201,161,74,.25)}
+.p .ph{width:84px;height:96px;border-radius:12px;background:#222924 center top/cover no-repeat}
+.p .n{font:600 24px/1.1 Oswald;overflow-wrap:anywhere;text-transform:uppercase;position:relative;z-index:1}
+.p .s{font-size:14px;color:#aab4cb;margin-top:4px;position:relative;z-index:1}
+.p .bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(201,161,74,.28),rgba(201,161,74,.08));width:0;transition:width .8s cubic-bezier(.16,1,.3,1)}
+.p .pc{font:700 34px Oswald;color:#c9a14a;z-index:1;padding-right:4px}
+.msg{text-align:center;margin-top:10px;font-size:16px;color:#aab4cb;min-height:24px}
+.msg b{color:#c9a14a}
+.tot{text-align:center;margin-top:6px;font-size:14px;color:#8590aa}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tt" id="tt"></div>
+  <h1>Кто победит?</h1>
+  <div class="sub" id="sub">Нажмите на игрока, за которого болеете</div>
+  <button class="p" data-v="0"><span class="bar"></span><span class="ph"></span><span><div class="n"></div><div class="s"></div></span><span class="pc"></span></button>
+  <button class="p" data-v="1"><span class="bar"></span><span class="ph"></span><span><div class="n"></div><div class="s"></div></span><span class="pc"></span></button>
+  <div class="msg" id="msg"></div>
+  <div class="tot" id="tot"></div>
+</div>
+<script>
+const TABLE=(location.pathname.split('/')[2]||'').replace(/[^\w-]/g,'');
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let P={open:false,a:0,b:0,total:0,mine:null};
+function team(p,full){ return p.name2?(full?`${p.name} / ${p.name2}`:`${p.name.split(' ')[0]} / ${p.name2.split(' ')[0]}`):p.name; }
+function loadState(){
+  fetch('/api/state/'+TABLE,{cache:'no-store'}).then(r=>r.json()).then(m=>{ const s=m.state; if(!s) return;
+    $('#tt').textContent=[s.title,s.subtitle].filter(Boolean).join(' · ');
+    document.querySelectorAll('.p').forEach((b,i)=>{ const p=(s.players||[])[i]||{name:'Игрок '+(i+1)};
+      b.querySelector('.n').textContent=team(p,true);
+      b.querySelector('.ph').style.backgroundImage=p.photo?`url('${p.photo}')`:'';
+      b.querySelector('.s').textContent=s.game==='long'?`Счёт сейчас: ${p.frames||0} (до ${s.raceTo})`:`Партий: ${p.frames||0} (матч до ${s.raceTo})`; });
+  }).catch(()=>{});
+}
+function render(){
+  const tot=P.total||0;
+  document.querySelectorAll('.p').forEach((b,i)=>{ const n=i?P.b:P.a, pc=tot?Math.round(n/tot*100):0, show=P.mine!=null||!P.open;
+    b.classList.toggle('mine',P.mine===i); b.disabled=!P.open;
+    b.querySelector('.bar').style.width=(show?pc:0)+'%'; b.querySelector('.pc').textContent=show?pc+'%':''; });
+  $('#msg').innerHTML=!P.open?(tot?'Голосование закрыто':'Голосование ещё не началось'):P.mine!=null?'Ваш голос принят — <b>можно передумать</b>, нажав на другого':'';
+  $('#tot').textContent=tot?`Проголосовало: ${tot}`:'';
+  $('#sub').style.visibility=P.open?'visible':'hidden';
+}
+function loadPoll(){ fetch('/api/poll/'+TABLE,{cache:'no-store'}).then(r=>r.json()).then(j=>{ if(j.error) return; P=j; render(); }).catch(()=>{}); }
+document.querySelectorAll('.p').forEach(b=>b.onclick=()=>{
+  if(!P.open) return;
+  fetch('/api/poll/'+TABLE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({v:+b.dataset.v})})
+    .then(r=>r.json()).then(j=>{ if(j.error){ $('#msg').textContent=j.error; return; } P=j; render(); try{navigator.vibrate&&navigator.vibrate(30)}catch(_){} });
+});
+loadState(); loadPoll(); setInterval(loadPoll,3000); setInterval(loadState,10000);
+</script>
+</body>
+</html>

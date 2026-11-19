@@ -151,11 +151,18 @@ function savePhoto(dataUrl) {
 const INFO_KEYS = ['country', 'city', 'age', 'height', 'rank', 'club', 'cue'];
 function setInfo(pl, b) { for (const k of INFO_KEYS) if (b[k] != null) pl[k] = clean(b[k], 60); }
 
+function broadcastPoll(id) {
+  const pl = get('poll:' + id, { open: false, votes: {} }), cnt = [0, 0];
+  for (const v of Object.values(pl.votes)) cnt[v]++;
+  const msg = JSON.stringify({ type: 'poll', open: pl.open, a: cnt[0], b: cnt[1], total: cnt[0] + cnt[1] });
+  for (const c of clients) if (c.table === id && c.readyState === 1) c.send(msg);
+}
+
 /* login rate limit */
 const tries = new Map();
-function limited(ip) {
+function limited(ip, max = 10) {
   const now = Date.now(), t = (tries.get(ip) || []).filter(x => now - x < 10 * 60 * 1000);
-  tries.set(ip, t); return t.length >= 10;
+  tries.set(ip, t); return t.length >= max;
 }
 
 /* ===================== tables & live state ===================== */
@@ -288,8 +295,57 @@ async function api(req, res, url) {
 
   if (p === '/api/bracket' && m === 'GET') return json(res, get('bracket', null));
 
+  // опрос зрителей «Кто победит?»: голосовать может кто угодно по ссылке/QR, один голос с устройства
+  if ((mm = /^\/api\/poll\/([\w-]+)$/.exec(p))) {
+    const id = mm[1]; if (!tableById(id)) return json(res, { error: 'Стол не найден' }, 404);
+    const pl = get('poll:' + id, { open: false, votes: {} }), cnt = [0, 0];
+    for (const v of Object.values(pl.votes)) cnt[v]++;
+    const out = (extra) => json(res, Object.assign({ open: pl.open, a: cnt[0], b: cnt[1], total: cnt[0] + cnt[1] }, extra || {}));
+    if (m === 'GET') return out({ mine: pl.votes[cookies(req).vid] ?? null });
+    if (m === 'POST') {
+      const b = await readBody(req);
+      if (b.action) { // управление — только оператор
+        if (!authed(req)) return json(res, { error: 'auth' }, 401);
+        if (b.action === 'open') pl.open = true; else if (b.action === 'close') pl.open = false; else if (b.action === 'reset') pl.votes = {};
+        set('poll:' + id, pl); broadcastPoll(id); return json(res, { ok: true });
+      }
+      if (!pl.open) return json(res, { error: 'Голосование закрыто' }, 400);
+      const v = +b.v; if (v !== 0 && v !== 1) return json(res, { error: 'bad vote' }, 400);
+      let vid = cookies(req).vid; const head = {};
+      if (!vid || !/^[\w-]{6,30}$/.test(vid)) { vid = uid(12); head['Set-Cookie'] = `vid=${vid}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`; }
+      const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+      if (limited('poll:' + ip, 300)) return json(res, { error: 'Слишком часто' }, 429);
+      (tries.get('poll:' + ip) || tries.set('poll:' + ip, []).get('poll:' + ip)).push(Date.now());
+      pl.votes[vid] = v; set('poll:' + id, pl); broadcastPoll(id);
+      cnt[0] = cnt[1] = 0; for (const x of Object.values(pl.votes)) cnt[x]++;
+      return send(res, 200, { open: pl.open, a: cnt[0], b: cnt[1], total: cnt[0] + cnt[1], mine: v }, undefined, head);
+    }
+  }
+
   if (!need()) return;
 
+  // шаблоны турниров: набор настроек, который можно применить к одному или ко всем столам
+  if (p === '/api/templates' && m === 'GET') return json(res, get('templates', []));
+  if (p === '/api/templates' && m === 'POST') {
+    const b = await readBody(req); const list = get('templates', []);
+    const t = { id: uid(6), name: clean(b.name, 60) || 'Шаблон', at: Date.now(), data: b.data && typeof b.data === 'object' ? b.data : {} };
+    list.push(t); set('templates', list); return json(res, t);
+  }
+  if ((mm = /^\/api\/templates\/([\w-]+)$/.exec(p)) && m === 'DELETE') { set('templates', get('templates', []).filter(t => t.id !== mm[1])); return json(res, { ok: true }); }
+  if ((mm = /^\/api\/templates\/([\w-]+)\/apply$/.exec(p)) && m === 'POST') {
+    const t = get('templates', []).find(x => x.id === mm[1]); if (!t) return json(res, { error: 'Шаблон не найден' }, 404);
+    const b = await readBody(req), ids = b.table === 'all' ? tables().map(x => x.id) : [b.table].filter(x => tableById(x));
+    const busy = [];
+    for (const id of ids) {
+      const L = liveOf(id), st = Object.assign({}, L.state || {}), d = t.data, playing = Array.isArray(st.log) && st.log.length > 0;
+      for (const k of ['title', 'subtitle', 'raceTo', 'ballsTo', 'foulBall', 'pairs', 'shot', 'pdur', 'firstKind']) if (d[k] !== undefined) st[k] = d[k];
+      if (d.game !== undefined) { if (!playing || st.game === d.game) st.game = d.game; else busy.push(tableById(id).name); }
+      if (d.cfg) st.cfg = Object.assign({}, st.cfg || {}, d.cfg);
+      st.updatedAt = Date.now();
+      putState(id, st, elNow(L), null);
+    }
+    return json(res, { ok: true, applied: ids.length, busy });
+  }
   if (p === '/api/bracket' && m === 'PUT') { const b = await readBody(req); const br = propagate(cleanBracket(b)); set('bracket', br); return json(res, br); }
   if (p === '/api/bracket' && m === 'DELETE') { del('bracket'); return json(res, { ok: true }); }
   if (p === '/api/media' && m === 'POST') {
@@ -423,6 +479,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/login') return serveFile(res, 'login.html');
     if ((mm = /^\/o\/([\w-]+)$/.exec(p))) return serveFile(res, 'control.html');
     if ((mm = /^\/k\/([\w-]+)$/.exec(p))) return serveFile(res, 'control.html'); // экран комментатора (только просмотр)
+    if ((mm = /^\/v\/([\w-]+)$/.exec(p))) return serveFile(res, 'vote.html');    // голосование зрителей с телефона
     if ((mm = /^\/t\/([\w-]+)$/.exec(p))) {
       if (!authed(req)) return send(res, 302, '', 'text/plain', { Location: '/login?next=' + encodeURIComponent(p) });
       return serveFile(res, 'control.html');
@@ -448,8 +505,10 @@ server.on('upgrade', (req, socket, head) => {
   if (!tableById(id)) return socket.destroy();
   wss.handleUpgrade(req, socket, head, ws => {
     ws.table = id; ws.canWrite = authed(req); ws.alive = true;
+    ws.role = ['o', 'side', 'k', 't', 'v'].includes(url.searchParams.get('role')) ? url.searchParams.get('role') : 'o';
     clients.add(ws);
     ws.send(JSON.stringify(snapshot(id)));
+    presence(id);
     ws.on('pong', () => ws.alive = true);
     ws.on('message', raw => {
       let m; try { m = JSON.parse(raw); } catch (e) { return; }
@@ -459,11 +518,18 @@ server.on('upgrade', (req, socket, head) => {
         ws.send(JSON.stringify({ type: 'ack', rev }));
       }
     });
-    ws.on('close', () => clients.delete(ws));
-    ws.on('error', () => clients.delete(ws));
+    ws.on('close', () => { clients.delete(ws); presence(id); });
+    ws.on('error', () => { clients.delete(ws); presence(id); });
   });
 });
-setInterval(() => { for (const c of clients) { if (!c.alive) { c.terminate(); clients.delete(c); continue; } c.alive = false; try { c.ping(); } catch (e) {} } }, 25000);
+// сколько экранов этого стола сейчас подключено: табло в OBS, мини-счёт, комментатор, пульты
+function presence(id) {
+  const n = { o: 0, side: 0, k: 0, t: 0, v: 0 };
+  for (const c of clients) if (c.table === id && c.readyState === 1) n[c.role]++;
+  const msg = JSON.stringify({ type: 'presence', n });
+  for (const c of clients) if (c.table === id && c.role === 't' && c.readyState === 1) c.send(msg);
+}
+setInterval(() => { for (const c of clients) { if (!c.alive) { c.terminate(); clients.delete(c); presence(c.table); continue; } c.alive = false; try { c.ping(); } catch (e) {} } }, 25000);
 
 store.ready.then(() => {
   if (!get('tables', []).length) set('tables', [{ id: 'stol1', name: 'Стол 1', createdAt: Date.now() }]);
