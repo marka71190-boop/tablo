@@ -1082,6 +1082,7 @@ function breakBg(){
   return C.pBgKind==='video'?`<video src="${esc(C.pBg)}" autoplay muted loop playsinline></video>`:`<img src="${esc(C.pBg)}" alt="">`;
 }
 /* ---- победитель ---- */
+const winTitle=()=>{ const t=String(S.cfg.winTitle||'').trim(); return !t||/матч/i.test(t)?'Победитель турнира':t; };
 function winnerHTML(){
   const C=S.cfg, w=winner();
   if(w<0) return {ph:'',r:`<div class="win-t rv" style="--d:.3s">Матч ещё идёт</div><div class="win-m rv" style="--d:.45s">Экран заполнится после последней партии</div>`};
@@ -1091,7 +1092,7 @@ function winnerHTML(){
   const tiles=W?[[`${W.w} из ${W.m}`,'Побед в турнире'],[`${W.fw}:${W.fl}`,isLong()?'Очки':'Партии'],[W.made,'Забито шаров'],[W.best,'Лучшая серия'],[pct(W.pot,W.att),'Реализация'],[avg(W.time,W.shots),'Ср. время подготовки']]
     :[[`${P.frames}:${O.frames}`,isLong()?'Счёт':'Партии'],[made(P),'Забито шаров'],[P.best,'Лучшая серия'],[pct(P.foreign+P.own,P.attacks),'Реализация'],[P.breaks?`${P.breaksOk}/${P.breaks}`:'—','Начальный удар'],[avg(P.time,P.shots),'Ср. время подготовки']];
   const r=`<div class="win-cup rv fitt" style="--d:.3s">${esc(S.title)}${S.subtitle?' · '+esc(S.subtitle):''}</div>
-    <div class="win-t rv" style="--d:.45s">${esc(C.winTitle||'Победитель')}</div>
+    <div class="win-t rv" style="--d:.45s">${esc(winTitle())}</div>
     <div class="win-n rv" style="--d:.65s">${C.flags?flag(P.country):''}<span class="fitx">${esc(P.name)}</span></div>
     <div class="win-m rv" style="--d:.8s">Счёт <b>${P.frames}:${O.frames}</b> · соперник: ${esc(O.name)}</div>
     <div class="win-sub rv" style="--d:.95s">${W?`Статистика за турнир · матчей: ${W.m}`:'Статистика матча'}</div>
