@@ -116,7 +116,7 @@ input[type=file].in{padding:8px;font-size:14px}
   <section class="view" id="v-bracket">
     <div class="card" style="margin-bottom:12px">
       <h3>Турнирная сетка из Excel</h3>
-      <p class="muted" style="margin-bottom:12px;line-height:1.5">Колонки: <b>Раунд · Игрок 1 · Игрок 2 · Счёт 1 · Счёт 2 · Стол · Время</b>. Достаточно заполнить первый раунд — следующие раунды создадутся сами.
+      <p class="muted" style="margin-bottom:12px;line-height:1.5">Подходят выгрузки <b>bill4you</b> и сетки <b>tournamentservice.net</b> (.xls/.xlsx) — формат определяется сам. Или своя таблица, колонки: <b>Раунд · Игрок 1 · Игрок 2 · Счёт 1 · Счёт 2 · Стол · Время</b>. Достаточно заполнить первый раунд — следующие раунды создадутся сами.
       Когда на пульте нажимают «Сохранить матч», счёт попадает в сетку, а победитель проходит дальше.</p>
       <div class="row">
         <button class="btn s" id="brTpl">⬇ Скачать шаблон Excel</button>
@@ -349,7 +349,7 @@ $('restore').onchange=async e=>{
 let BRK=null;
 function xlsxLib(){
   if(window.XLSX) return Promise.resolve(window.XLSX);
-  return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src='/js/xlsx.mini.min.js'; sc.onload=()=>ok(window.XLSX); sc.onerror=no; document.head.appendChild(sc); });
+  return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src='/js/xlsx.full.min.js'; sc.onload=()=>ok(window.XLSX); sc.onerror=no; document.head.appendChild(sc); });
 }
 function winIdx(m){ if(m.xa&&m.b&&!m.xb) return 1; if(m.xb&&m.a&&!m.xa) return 0; if(!m.a||!m.b) return null;
   if(/тп/i.test(m.ta||'')&&!/тп/i.test(m.tb||'')) return 1; if(/тп/i.test(m.tb||'')&&!/тп/i.test(m.ta||'')) return 0;
@@ -380,30 +380,46 @@ function parseRows(rows){
 }
 /* выгрузка bill4you и похожие: блоки «#N Стол X» + дата, ниже два игрока (страна, имя, счёт) */
 const C3={RUS:'ru',BLR:'by',KAZ:'kz',UKR:'ua',UZB:'uz',KGZ:'kg',TJK:'tj',ARM:'am',AZE:'az',GEO:'ge',MDA:'md',LAT:'lv',LVA:'lv',LTU:'lt',EST:'ee',FIN:'fi',GER:'de',DEU:'de',ABH:'ab'};
+// старые .xls (tournamentservice.net) хранят русский текст в Windows-1251 без пометки — исправляем «Òóðíèð» → «Турнир»
+const fixEnc=v=>{ if(typeof v!=='string'||!/[\u00c0-\u00ff]{2}/.test(v)||/[\u0400-\u04ff]/.test(v)) return v;
+  try{ return new TextDecoder('windows-1251').decode(Uint8Array.from([...v].map(c=>c.charCodeAt(0)&255))); }catch(_){ return v; } };
+const RN2=n=>n===1?'Финал':n===2?'Полуфинал':n===4?'Четвертьфинал':`1/${n} финала`;
 function parseBlocks(ws,X){
   const R=X.utils.decode_range(ws['!ref']||'A1');
-  const v=(r,c)=>{ const cl=ws[X.utils.encode_cell({r,c})]; return cl?cl.v:''; };
+  const v=(r,c)=>{ const cl=ws[X.utils.encode_cell({r,c})]; return cl?fixEnc(cl.v):''; };
   const sv=(r,c)=>String(v(r,c)??'').trim();
+  // все блоки матчей «#N [Стол X]»
+  const found=[];
+  for(let r=R.s.r;r<=R.e.r;r++) for(let c=R.s.c;c<=R.e.c;c++){ const m=/^#\s*(\d+)(?:\s+(?:Стол\s*)?(.*))?$/i.exec(sv(r,c)); if(m) found.push({r,c,no:+m[1],tbl:m[2]}); }
+  if(found.length<2) return null;
+  const top=Math.min(...found.map(f=>f.r)), first=found.reduce((a,f)=>f.no<a.no?f:a,found[0]);
+  // строка с названиями раундов (bill4you) — только выше первого матча
   const heads=[]; let hr=-1, best=0;
-  for(let r=R.s.r;r<=Math.min(R.e.r,R.s.r+20);r++){ const h=[]; for(let c=R.s.c;c<=R.e.c;c++){ const t=sv(r,c); if(/тур|раунд|финал/i.test(t)) h.push({c,t}); } if(h.length>best){best=h.length;hr=r;heads.splice(0,heads.length,...h);} }
-  const headAt=c=>heads.reduce((b,h)=>h.c<=c&&(!b||h.c>b.c)?h:b,null);
-  const groups={}; let found=0;
-  for(let r=R.s.r;r<=R.e.r;r++) for(let c=R.s.c;c<=R.e.c;c++){
-    const t=sv(r,c), m=/^#\s*(\d+)(?:\s+(?:Стол\s*)?(.*))?$/i.exec(t); if(!m) continue; found++;
-    const pl=i=>{ const name=sv(r+i,c+1), sc=v(r+i,c+2), st=String(sc??'').trim();
-      return {name:name==='X'?'':name, x:name==='X', cc:C3[sv(r+i,c).toUpperCase()]||'', s:typeof sc==='number'?sc:(/^\d+$/.test(st)?+st:null), t:/тп/i.test(st)?'ТП':''}; };
-    const A=pl(1), B=pl(2); let wTo=null, lTo=null;
+  for(let r=R.s.r;r<top;r++){ const h=[]; for(let c=R.s.c;c<=R.e.c;c++){ const t=sv(r,c); if(/тур|раунд|финал/i.test(t)&&!/турнирн|^турнир/i.test(t)) h.push({c,t}); } if(h.length>best){best=h.length;hr=r;heads.splice(0,heads.length,...h);} }
+  const headAt=c=>heads.reduce((b,h)=>h.c<=c&&c-h.c<5&&(!b||h.c>b.c)?h:b,null);
+  const groups={};
+  for(const f of found){
+    const {r,c}=f;
+    const pl=i=>{ const cc=sv(r+i,c), name=sv(r+i,c+1), sc=v(r+i,c+2), st=String(sc??'').trim();
+      return {name:name==='X'?'':name, x:name==='X', cc:C3[cc.toUpperCase()]||'', seed:/^\d+$/.test(cc)?+cc:null,
+        s:typeof sc==='number'?sc:(/^\d+$/.test(st)?+st:null), t:/тп/i.test(st)?'ТП':''}; };
+    const A=pl(1), B=pl(2); let wTo=null, lTo=null, label='';
     for(let d=3;d<=4;d++){ const e=sv(r+d,c); let q;
       if((q=/победител\S*\s+на\s+#\s*(\d+)/i.exec(e))) wTo=+q[1];
-      if((q=/проигравш\S*\s+на\s+#\s*(\d+)/i.exec(e))) lTo=+q[1]; }
-    const h=headAt(c), key=h?h.c:-1, side=h&&hr>=0?(/нижн/i.test(sv(hr+1,h.c))?'lower':/верхн/i.test(sv(hr+1,h.c))?'upper':''):'';
-    const g=groups[key]||(groups[key]={name:h?h.t:'Раунд',side,matches:[]});
-    g.matches.push({row:r,no:+m[1],a:A.name,b:B.name,ca:A.cc,cb:B.cc,sa:A.s,sb:B.s,ta:A.t,tb:B.t,xa:A.x,xb:B.x,wTo,lTo,table:m[2]?('Стол '+m[2].trim()):'',time:sv(r,c+2)});
+      if((q=/проигравш\S*\s+на\s+#\s*(\d+)/i.exec(e))) lTo=+q[1];
+      if(/^(финал|полуфинал|четвертьфинал|1\/\d+.*|за \d+.*место.*)$/i.test(e)) label=e; }
+    const h=headAt(c), side=h&&hr>=0&&/нижн/i.test(sv(hr+1,h.c))?'lower':h&&hr>=0&&/верхн/i.test(sv(hr+1,h.c))?'upper':(c<first.c?'lower':'upper');
+    const g=groups[c]||(groups[c]={name:h?h.t:'',side,labels:[],matches:[]});
+    if(label) g.labels.push(label);
+    g.matches.push({row:r,no:f.no,a:A.name,b:B.name,ca:A.cc,cb:B.cc,sa:A.s,sb:B.s,ta:A.t,tb:B.t,xa:A.x,xb:B.x,seedA:A.seed,seedB:B.seed,wTo,lTo,
+      table:f.tbl?('Стол '+f.tbl.trim()):'',time:sv(r,c+2)});
   }
-  if(found<2) return null;
-  const rounds=Object.values(groups).map(g=>(g.matches.sort((x,y)=>x.row-y.row),g.matches.forEach(m=>delete m.row),g))
+  const rounds=Object.values(groups).map(g=>{ g.matches.sort((x,y)=>x.row-y.row); g.matches.forEach(m=>delete m.row); return g; })
     .sort((x,y)=>Math.min(...x.matches.map(m=>m.no))-Math.min(...y.matches.map(m=>m.no)));
-  return {title:sv(R.s.r,R.s.c),rounds};
+  let lowK=0;
+  rounds.forEach(g=>{ if(!g.name) g.name=g.labels[0]||(g.side==='lower'?`Нижняя, круг ${++lowK}`:RN2(g.matches.length)); delete g.labels; });
+  const t=sv(R.s.r,R.s.c)||sv(R.s.r+1,R.s.c+1);
+  return {title:/^турнирная сетка/i.test(t)?'':t,rounds};
 }
 async function loadBr(){ BRK=await api('/api/bracket'); renderBr(); }
 function renderBr(){
@@ -411,7 +427,7 @@ function renderBr(){
   if(!BRK||!BRK.rounds||!BRK.rounds.length){ box.innerHTML='<div class="empty">Сетка не загружена. Скачайте шаблон, заполните игроков первого раунда и загрузите файл.</div>'; return; }
   box.innerHTML=`<div class="row" style="margin-bottom:10px"><input class="in" id="brTitle" placeholder="Название турнира" value="${esc(BRK.title||'')}" style="flex:1"><button class="btn g" id="brSave">Сохранить сетку</button></div>`+
     BRK.rounds.map((r,ri)=>`<div class="brr"><h4>Раунд <input class="in" data-rn="${ri}" value="${esc(r.name)}">${r.side==='lower'?'<span class="muted">нижняя сетка</span>':r.side==='upper'?'<span class="muted">верхняя сетка</span>':''}</h4>${r.matches.map((m,k)=>{const wi=winIdx(m), wa=wi===0, wb=wi===1;
-      return `<div class="brm" data-m="${ri}:${k}"><input class="in ${wa?'w':''}" data-f="a" value="${esc(m.a)}" placeholder="${m.no!=null?'#'+m.no+' ':''}${m.xa?'— пусто —':'Игрок 1'}"><input class="in" data-f="sa" value="${m.sa??m.ta??''}"><input class="in" data-f="sb" value="${m.sb??m.tb??''}"><input class="in ${wb?'w':''}" data-f="b" value="${esc(m.b)}" placeholder="${m.xb?'— пусто —':'Игрок 2'}"><input class="in opt" data-f="table" value="${esc(m.table)}" placeholder="Стол"><input class="in opt" data-f="time" value="${esc(m.time)}" placeholder="Время"></div>`}).join('')}</div>`).join('');
+      return `<div class="brm" data-m="${ri}:${k}"><input class="in ${wa?'w':''}" data-f="a" value="${esc(m.a)}" placeholder="${m.no!=null?'#'+m.no+' ':''}${m.xa?'— пусто —':m.seedA?'посев '+m.seedA:'Игрок 1'}"><input class="in" data-f="sa" value="${m.sa??m.ta??''}"><input class="in" data-f="sb" value="${m.sb??m.tb??''}"><input class="in ${wb?'w':''}" data-f="b" value="${esc(m.b)}" placeholder="${m.xb?'— пусто —':m.seedB?'посев '+m.seedB:'Игрок 2'}"><input class="in opt" data-f="table" value="${esc(m.table)}" placeholder="Стол"><input class="in opt" data-f="time" value="${esc(m.time)}" placeholder="Время"></div>`}).join('')}</div>`).join('');
   $('brSave').onclick=saveBr;
 }
 function collectBr(){
