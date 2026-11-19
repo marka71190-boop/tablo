@@ -270,11 +270,25 @@ function renderPlayers(){
       <button class="btn s sm" data-ed="1">✎ Изменить</button>
       <button class="btn d sm" data-del="${p.id}">Удалить</button>
     </div>
+    <div class="row" style="margin-top:8px">
+      <label class="btn s sm">📷 Загрузить фото<input type="file" accept="image/*" hidden data-up="photo"></label>
+      <label class="btn s sm">🧍 Загрузить фото в рост<input type="file" accept="image/*" hidden data-up="body"></label>
+      ${p.photoId?`<button class="btn s sm" data-dl="${p.photoId}" data-dn="${esc(p.name)}">⬇ Скачать фото</button>`:''}
+      ${p.bodyId?`<button class="btn s sm" data-dl="${p.bodyId}" data-dn="${esc(p.name)} — в рост">⬇ Скачать фото в рост</button>`:''}
+    </div>
     <div class="edit"><div class="pform">${formHTML(p)}</div>
       <button class="btn g sm" data-save="${p.id}">Сохранить</button>${p.photoId?`<button class="btn s sm" data-nophoto="${p.id}">Убрать фото</button>`:''}${p.bodyId?`<button class="btn s sm" data-nobody="${p.id}">Убрать фото в рост</button>`:''}</div>
   </div>`}).join(''):'<div class="empty">Игроков пока нет. Добавьте их — потом на пульте можно будет выбрать игрока из списка, и фото подставится само.</div>';
 }
 $('pFilter').oninput=renderPlayers;
+// загрузка фото прямо с карточки игрока, без режима правки
+$('players').addEventListener('change',async e=>{
+  const t=e.target; if(!t.dataset.up) return; const card=t.closest('[data-id]'), f=t.files[0]; t.value=''; if(!f||!card) return;
+  toast('Загружаю фото…');
+  try{ const img=await resizePhoto(f,t.dataset.up==='body'?2200:1000);
+    await api('/api/players/'+card.dataset.id,{method:'PATCH',body:{[t.dataset.up]:img}}); toast('Фото загружено'); loadPlayers(); }
+  catch(_){ toast('Не удалось загрузить фото',true); }
+});
 $('addPlayer').onsubmit=async e=>{
   e.preventDefault(); const btn=e.submitter; btn.disabled=true;
   try{ const f=document.querySelector('#addPlayer [data-form]'); await api('/api/players',{method:'POST',body:await formData(f)});
@@ -287,12 +301,14 @@ $('players').onclick=async e=>{
   if(b.dataset.hist){ $('hFilter').value=b.dataset.hist; showTab('history'); }
   if(b.dataset.save){ b.disabled=true; try{ await api('/api/players/'+b.dataset.save,{method:'PATCH',body:await formData(card.querySelector('.edit .pform'))}); toast('Сохранено'); loadPlayers(); } finally{ b.disabled=false; } }
   if(b.dataset.nobody){ await api('/api/players/'+b.dataset.nobody,{method:'PATCH',body:{body:''}}); loadPlayers(); }
+  if(b.dataset.dl){ // скачать фото игрока: сервер отдаёт файл с именем игрока
+    const a=document.createElement('a'); a.href=photoUrl(b.dataset.dl)+'?dl='+encodeURIComponent(b.dataset.dn); a.download=''; document.body.appendChild(a); a.click(); a.remove(); }
   if(b.dataset.nophoto){ await api('/api/players/'+b.dataset.nophoto,{method:'PATCH',body:{photo:''}}); loadPlayers(); }
   if(b.dataset.del) confirmBtn(b,async()=>{ await api('/api/players/'+b.dataset.del,{method:'DELETE'}); toast('Игрок удалён'); loadPlayers(); },'Удалить?');
 };
 
 /* ---------- history ---------- */
-const DET=[['Забито шаров',p=>p.foreign+p.own+(p.luck||0)],['Чужих',p=>p.foreign],['Своих',p=>p.own],['Случайных',p=>p.luck||0],['Начальный удар',p=>(p.breaksOk||0)+'/'+(p.breaks||0)],['Лучшая серия',p=>p.best],['Атаки',p=>p.attacks],
+const DET=[['Отыгрыши (неудачных)',p=>p.safeties?`${p.safeties} (${p.safFail||0})`:'0'],['Забито шаров',p=>p.foreign+p.own+(p.luck||0)],['Чужих',p=>p.foreign],['Своих',p=>p.own],['Случайных',p=>p.luck||0],['Начальный удар',p=>(p.breaksOk||0)+'/'+(p.breaks||0)],['Лучшая серия',p=>p.best],['Атаки',p=>p.attacks],
   ['Реализация',p=>p.attacks?Math.round((p.foreign+p.own)/p.attacks*100)+'%':'—'],['Отыгрыши',p=>p.safeties],['Фолы',p=>p.fouls],
   ['Время на удар',p=>p.shots?Math.round(p.time/p.shots/1000)+' с':'—']];
 async function loadHistory(){ MATCHES=await api('/api/matches'); renderHistory(); }

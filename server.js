@@ -178,7 +178,7 @@ function putState(id, state, el, from) {
 }
 
 /* ===================== matches ===================== */
-const STAT_KEYS = ['frames', 'balls', 'foreign', 'own', 'luck', 'best', 'attacks', 'safeties', 'fouls', 'time', 'shots', 'breaks', 'breaksOk', 'fpts'];
+const STAT_KEYS = ['frames', 'balls', 'foreign', 'own', 'luck', 'best', 'attacks', 'safeties', 'safFail', 'fouls', 'time', 'shots', 'breaks', 'breaksOk', 'fpts'];
 function matchFrom(tableId, st) {
   const t = tableById(tableId) || { name: '' };
   const players = (st.players || []).slice(0, 2).map(p => {
@@ -395,7 +395,9 @@ const server = http.createServer(async (req, res) => {
     let mm;
     if ((mm = /^\/photos\/([\w-]+)\.jpg$/.exec(p))) {
       const ph = get('photo:' + mm[1]); if (!ph) return send(res, 404, 'Not found', 'text/plain');
-      res.writeHead(200, { 'Content-Type': 'image/' + ph.t, 'Cache-Control': 'public, max-age=31536000, immutable' });
+      const dn = clean(url.searchParams.get('dl'), 100).replace(/[\\/:*?"<>|]/g, ''); // ?dl=Имя — скачать файлом с понятным именем
+      const disp = dn ? { 'Content-Disposition': `attachment; filename="photo.${ph.t === 'jpeg' ? 'jpg' : ph.t}"; filename*=UTF-8''${encodeURIComponent(dn + '.' + (ph.t === 'jpeg' ? 'jpg' : ph.t))}` } : {};
+      res.writeHead(200, { 'Content-Type': 'image/' + ph.t, 'Cache-Control': 'public, max-age=31536000, immutable', ...disp });
       return res.end(Buffer.from(ph.b, 'base64'));
     }
     if ((mm = /^\/media\/([\w-]+)$/.exec(p))) {
