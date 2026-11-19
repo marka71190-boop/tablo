@@ -634,7 +634,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
     <div class="fields" style="max-width:520px"><label>Длинная пирамида: показывать счёт стойки после «Разбоя», сек<input id="fFhDur" type="number" min="2" max="120"></label></div>
     <div>
     </div>
-    <div class="hint">Статистика за турнир собирается из сохранённых матчей с тем же названием турнира плюс текущий матч.</div>
+    <div class="hint">На экране победителя — статистика этого матча.</div>
   </details>
 
   <details class="card2 set">
@@ -676,11 +676,11 @@ const isOverlay=()=>SEG[1]==='o';
 const QS=new URLSearchParams(location.search);
 const VIEW=isOverlay()?(QS.get('v')||''):'';                               // ?v=side — мини-счёт для бокового ракурса
 const VIEW_POS=['tl','tr','bl','br'].includes(QS.get('pos'))?QS.get('pos'):''; // угол: tl, tr, bl, br
-const CNT=['foreign','own','luck','attacks','safeties','fouls','time','shots','breaks','breaksOk','fpts'];
-const blankP=n=>({name:n,photo:'',body:'',country:'ru',info:{},playerId:null,name2:'',photo2:'',body2:'',playerId2:null,frames:0,balls:0,foreign:0,own:0,luck:0,best:0,attacks:0,safeties:0,fouls:0,time:0,shots:0,breaks:0,breaksOk:0,fpts:0,extUsed:0});
+const CNT=['foreign','own','luck','attacks','safeties','safFail','fouls','time','shots','breaks','breaksOk','fpts'];
+const blankP=n=>({name:n,photo:'',body:'',country:'ru',info:{},playerId:null,name2:'',photo2:'',body2:'',playerId2:null,frames:0,balls:0,foreign:0,own:0,luck:0,best:0,attacks:0,safeties:0,safFail:0,fouls:0,time:0,shots:0,breaks:0,breaksOk:0,fpts:0,extUsed:0});
 const counters=p=>Object.fromEntries(CNT.map(k=>[k,p[k]||0]));
-const STAT_ON0=['brk','best','attacks','foreign','own','luck','err','fouls','time'];
-const STAT_ALL=['brk','best','attacks','foreign','own','luck','made','pct','err','saf','fouls','time','misses','shots','frames','fpts'];
+const STAT_ON0=['brk','best','attacks','foreign','own','luck','err','saf','safFail','fouls','time'];
+const STAT_ALL=['brk','best','attacks','foreign','own','luck','made','pct','err','saf','safFail','fouls','time','misses','shots','frames','fpts'];
 const DEFCFG=()=>({v:2,stats:STAT_ALL.map(id=>({id,on:STAT_ON0.includes(id),label:''})).sort((a,b)=>(STAT_ON0.indexOf(a.id)+1||99)-(STAT_ON0.indexOf(b.id)+1||99)),
   photos:true,flags:true,title:true,timer:true,mclock:true,balls:true,acc:'#c9a14a',logo:'',sponsors:[],spInt:8,spBug:true,
   tkOn:false,tk:'',tkLabel:'Новости',tkSpeed:110,people:[],ltDur:6,
@@ -701,6 +701,11 @@ function norm(s){
   o.cfg=Object.assign(dc,old.v===2?old:{logo:old.logo||'',sponsors:old.sponsors||[]});
   const have=new Set(o.cfg.stats.map(x=>x.id)); dc.stats.forEach(x=>{ if(!have.has(x.id)) o.cfg.stats.push(x) });
   o.cfg.stats=o.cfg.stats.filter(x=>STATDEF[x.id]);
+  if(!o.cfg.sf1){ const L=o.cfg.stats, ix=L.findIndex(x=>x.id==='saf');
+    ['saf','safFail'].forEach(id=>{ const k=L.findIndex(x=>x.id===id); if(k>=0) L[k].on=true; });
+    const kf=L.findIndex(x=>x.id==='safFail'), ks=L.findIndex(x=>x.id==='saf'); if(kf>=0&&ks>=0&&kf!==ks+1){ const [it]=L.splice(kf,1); L.splice(L.findIndex(x=>x.id==='saf')+1,0,it); }
+    o.cfg.sf1=true; }
+  if(!o.cfg.wt3&&/турнир/i.test(o.cfg.winTitle||'')){ o.cfg.winTitle='Победитель матча'; } o.cfg.wt3=true;
   if(!o.cfg.wt2){ if(!o.cfg.winTitle||o.cfg.winTitle==='Победитель турнира') o.cfg.winTitle='Победитель матча'; o.cfg.wt2=true; } // старая надпись по умолчанию
   o.shot=Object.assign(DEF().shot,s.shot||{});
   o.players=[0,1].map(i=>{const p=Object.assign(blankP('Игрок '+(i+1)),(s.players||[])[i]||{}); p.info=p.info||{}; return p});
@@ -721,7 +726,7 @@ let lastLocal=0;
 function save(){
   if(!isOverlay()){ const w=winner();
     if(w<0) S.winShown=false;
-    else if(!S.winShown){ S.winShown=true; if(S.cfg.autoWin){ S.screen='winner'; setTimeout(computeWin,30); } } }
+    else if(!S.winShown){ S.winShown=true; if(S.cfg.autoWin){ S.screen='winner'; } } }
   S.updatedAt=Date.now(); lastLocal=Date.now();
   push(); renderAll();
 }
@@ -828,6 +833,8 @@ function applyEv(X,e){
     if(X.turn!==i){X.turn=i;X.series=0;recvTurn(X,i)}
     p.time+=e.pr||0; p.shots++;
     const pot=t==='foreign'||t==='own'||t==='luck';
+    // неудачный отыгрыш: соперник после него сразу забил
+    if(X.lastSaf!=null){ if(pot&&X.lastSaf===1-i) o.safFail=(o.safFail||0)+1; X.lastSaf=null; }
     if(!X.fs.brk){ p.breaks++; if(pot) p.breaksOk++; X.fs.brk={i,ok:pot}; }
     if(pot){
       p[t]++; if(t!=='luck') p.attacks++; X.series++; p.best=Math.max(p.best,X.series); X.fs.best[i]=Math.max(X.fs.best[i]||0,X.series);
@@ -835,7 +842,7 @@ function applyEv(X,e){
       else { p.balls++; const bt=e.bt??X.ballsTo; if(bt>0&&p.balls>=bt){ p.frames++; endFrameS(X,i,e.mt||0); } }
     }
     else if(t==='miss'){p.attacks++; pass();}
-    else if(t==='safety'){p.safeties++; pass();}
+    else if(t==='safety'){p.safeties++; pass(); X.lastSaf=i;}
     else { p.fouls++; pass();
       if(long||e.fb===1){ // штраф: шар (очко) сопернику
         o.fpts=(o.fpts||0)+1;
@@ -861,7 +868,7 @@ function replay(X,cb){
   const b=X.base0||zeroBase();
   X.players.forEach((p,k)=>Object.assign(p,clone(b.pl[k])));
   X.turn=b.turn||0; X.series=0; X.frameLog=[]; X.lastFrame=null; X.fs=newFs(X.players,b.at||0); X.rack=1;
-  X.vis=[-1,-1]; X.vis[X.turn]=0; X.sub=[0,0];
+  X.vis=[-1,-1]; X.vis[X.turn]=0; X.sub=[0,0]; X.lastSaf=null;
   X.log.forEach((e,k)=>{ if(cb) cb(e,k,X); applyEv(X,e); });
 }
 function ev(t,i,pre){
@@ -903,6 +910,7 @@ const STATDEF={
   pct:['Реализация',q=>P(q.foreign+q.own,q.attacks),v=>v==null?'—':v+'%',1],
   err:['Ошибок всего',q=>P(q.attacks-q.foreign-q.own,q.attacks),v=>v==null?'—':v+'%',-1],
   saf:['Отыгрыш',q=>q.safeties,null,0],
+  safFail:['Неудачный отыгрыш',q=>q.safFail||0,(v,q)=>q.safeties?`${v} из ${q.safeties}`:'—',-1],
   fouls:['Штраф',q=>q.fouls,null,-1],
   time:['Ср. время подготовки',q=>avgS(q),v=>v==null?'—':Math.round(v)+' сек',-1],
   misses:['Промахи',q=>q.attacks-q.foreign-q.own,null,-1],
@@ -1112,11 +1120,12 @@ const winTitle=()=>String(S.cfg.winTitle||'').trim()||'Победитель ма
 function winnerHTML(){
   const C=S.cfg, w=winner();
   if(w<0) return {ph:'',r:`<div class="win-t rv" style="--d:.3s">Матч ещё идёт</div><div class="win-m rv" style="--d:.45s">Экран заполнится после последней партии</div>`};
-  const P=S.players[w], O=S.players[1-w], W=S.win&&S.win.name===teamName(P,true)?S.win:null;
+  const P=S.players[w], O=S.players[1-w], W=null; // только статистика этого матча
   const ph=P.body?`<img class="body" src="${esc(P.body)}" alt="">`:P.photo?`<div class="ava"><img src="${esc(P.photo)}" alt=""></div>`:SILB;
   const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—', avg=(t,n)=>n?Math.round(t/n/1000)+' сек':'—';
-  const tiles=W?[[`${W.w} из ${W.m}`,'Побед в турнире'],[`${W.fw}:${W.fl}`,isLong()?'Очки':'Партии'],[W.made,'Забито шаров'],[W.best,'Лучшая серия'],[pct(W.pot,W.att),'Реализация'],[avg(W.time,W.shots),'Ср. время подготовки']]
+  let tiles=W?[[`${W.w} из ${W.m}`,'Побед в турнире'],[`${W.fw}:${W.fl}`,isLong()?'Очки':'Партии'],[W.made,'Забито шаров'],[W.best,'Лучшая серия'],[pct(W.pot,W.att),'Реализация'],[avg(W.time,W.shots),'Ср. время подготовки']]
     :[[`${P.frames}:${O.frames}`,isLong()?'Счёт':'Партии'],[made(P),'Забито шаров'],[P.best,'Лучшая серия'],[pct(P.foreign+P.own,P.attacks),'Реализация'],[P.breaks?`${P.breaksOk}/${P.breaks}`:'—','Начальный удар'],[avg(P.time,P.shots),'Ср. время подготовки']];
+  if(P.safeties) tiles.splice(5,0,[`${P.safeties-(P.safFail||0)}/${P.safeties}`,'Удачных отыгрышей']); tiles.length=Math.min(tiles.length,6);
   const r=`<div class="win-cup rv fitt" style="--d:.3s">${esc(S.title)}${S.subtitle?' · '+esc(S.subtitle):''}</div>
     <div class="win-t rv" style="--d:.45s">${esc(winTitle())}</div>
     <div class="win-n rv" style="--d:.65s">${C.flags?flag(P.country):''}<span class="fitx">${esc(teamName(P))}</span></div>
@@ -1337,6 +1346,7 @@ function panelCol(i){
       <span>Атаки <b>${p.attacks}</b></span>
       <span>Ошибки <b>${P(p.attacks-p.foreign-p.own,p.attacks)??'—'}${p.attacks?'%':''}</b></span>
       <span>Разбой <b>${p.breaksOk}/${p.breaks}</b></span>
+      <span>Отыгр. <b>${p.safeties}</b>${p.safeties?` (неуд. <b>${p.safFail||0}</b>)`:''}</span>
       <span>Штраф <b>${p.fouls}</b></span>
       <span>Удар <b>${avgS(p)==null?'—':Math.round(avgS(p))+' с'}</b></span>
     </div>
@@ -1610,7 +1620,7 @@ function setScreen(v){
   if(v==='break'&&!S.pclock.running&&pLeft()>0&&S.pclock.acc===0) S.pclock={running:true,start:Date.now(),acc:0};
   if(v==='bracket') loadBracket();
   S.screen=v; save();
-  if(v==='winner') computeWin();
+
 }
 /* ---- перерыв ---- */
 $('pStart').onclick=()=>{ if(pLeft()<=0) S.pclock={running:false,start:Date.now(),acc:0}; if(!S.pclock.running) S.pclock={running:true,start:Date.now()-S.pclock.acc,acc:0}; save(); };
