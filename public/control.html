@@ -1062,7 +1062,7 @@ function fhVis(r){ const fh=r.querySelector('[data-k="fh"]'); if(!fh) return;
 function fhHTML(c){
   const L=S.frameLog||[], prev=c._prev.fhn; c._prev.fhn=L.length;
   if(isLong()){ const f=L[L.length-1]; if(!f) return '';
-    return `<div class="fh"><small>стойка ${L.length}</small><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }
+    return `<div class="fh"><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }
   return L.slice(-7).map((f,k,arr)=>{ const n=L.length-arr.length+k+1, isNew=prev!==undefined&&L.length>prev&&k===arr.length-1;
     return `<div class="fh${isNew?' new':''}"><small>${n}</small><span><b class="${f.w===0?'w':''}">${f.a}</b>:<b class="${f.w===1?'w':''}">${f.b}</b></span></div>`; }).join('');
 }
@@ -1201,7 +1201,7 @@ function updSide(c){
     setNum(c,'sdS'+k,'sdS'+k,p.frames);
     c.querySelector(`[data-k="sdS${k}"]`).classList.toggle('w3',p.frames>99);
   });
-  setK(c,'sdI',w>=0?'Матч завершён':(isLong()?`Стойка ${S.rack||1} · `:`Партия ${A.frames+B.frames+1} · `)+(C.mclock?'<span data-mc></span>':''));
+  setK(c,'sdI',w>=0?'Матч завершён':(isLong()?'':`Партия ${A.frames+B.frames+1} · `)+(C.mclock?'<span data-mc></span>':''));
 }
 function updateStage(c,first){
   if(!c.querySelector('.stage')){ c.innerHTML=skeleton(); c._prev={}; first=true; }
@@ -1215,7 +1215,7 @@ function updateStage(c,first){
   // bug
   setK(c,'lg',C.logo?`<img src="${esc(C.logo)}" alt="">`:'');
   setK(c,'tt',C.title?`<b>${esc(S.title)}</b>${S.subtitle?`<span>${esc(S.subtitle)}</span>`:''}<span>· ${esc(racePhrase())}</span>`:`<b>${esc(racePhrase())}</b>`);
-  setK(c,'fn',winner()>=0?'Матч завершён':isLong()?`Стойка ${S.rack||1}`:`Партия ${A.frames+B.frames+1}`);
+  setK(c,'fn',winner()>=0?'Матч завершён':isLong()?'':`Партия ${A.frames+B.frames+1}`);
   c.querySelectorAll('.fr').forEach(e=>e.classList.toggle('w3',Math.max(A.frames,B.frames)>99));
   setK(c,'picA',picHTML(A,'a')); setK(c,'picB',picHTML(B,'b'));
   setK(c,'nmA',nameHTML(0)); setK(c,'nmB',nameHTML(1));
