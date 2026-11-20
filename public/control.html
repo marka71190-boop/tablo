@@ -361,6 +361,12 @@ body.comm #comm{display:block;max-width:1400px;margin:0 auto;padding:14px}
 .slc .fields{margin-top:0}
 .slc .imgs{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
 
+.pyr{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:0 20px 20px}
+.pyr span{display:flex;flex-direction:column;align-items:center;min-width:110px;padding:6px 12px;border-radius:10px;background:var(--plate);font:600 30px/1.1 Oswald;color:#e9e1c8;font-variant-numeric:tabular-nums}
+.pyr span.cur{box-shadow:0 0 0 2px var(--g);background:#2a2412}
+.pyr small{font:500 14px Oswald;letter-spacing:1px;color:var(--lblT);text-transform:uppercase}
+.pyr i{font-style:normal;white-space:nowrap}.pyr b{font-weight:600}.pyr b.w{color:var(--g)}
+
 /* индикатор подключённых экранов */
 .pres{display:flex;gap:6px;flex-wrap:wrap}
 .pres span{font-size:12px;padding:3px 8px;border-radius:20px;background:#141d33;color:#8590aa;border:1px solid #26314f}
@@ -1204,18 +1210,33 @@ function statRows(Q,isFrame){
     return [show(a,Q[0]),l,show(b,Q[1]),lead];
   });
 }
+// очки каждой пирамиды: сыгранные (frameLog) + текущая
+function pyrScores(){
+  const L=(S.frameLog||[]).map((f,k)=>({n:k+1,a:f.a,b:f.b,k:f.k,cur:false}));
+  const sc=S.fs.sc||[0,0], ca=S.players[0].frames-sc[0], cb=S.players[1].frames-sc[1];
+  L.push({n:S.rack||L.length+1,a:ca,b:cb,k:S.rk,cur:true});
+  return L;
+}
 function statCard(kind){
-  const [A,B]=S.players; const isF=kind==='frame', unit=isLong()?'пирамиды':'партии';
-  let Q, clk, label;
+  const [A,B]=S.players; const isF=kind==='frame', L=isLong(), unit=L?'пирамиды':'партии';
+  let Q, clk, label, sa=A.frames, sb=B.frames, extra='';
   if(isF){
     const cur=frameStats(); const empty=!cur[0].shots&&!cur[1].shots;
-    if(empty&&S.lastFrame){ Q=S.lastFrame.p; clk=fmtH(S.lastFrame.dur); label=`Статистика ${S.lastFrame.n}-й ${unit}`; }
-    else { Q=cur; clk='<span data-fc></span>'; label=`Статистика ${isLong()?(S.rack||1):A.frames+B.frames+1}-й ${unit}`; }
+    const ps=L?pyrScores():null;
+    if(empty&&S.lastFrame){ Q=S.lastFrame.p; clk=fmtH(S.lastFrame.dur); label=`Статистика ${S.lastFrame.n}-й ${unit}`;
+      if(L){ const f=ps[ps.length-2]; if(f){ sa=f.a; sb=f.b; } } }
+    else { Q=cur; clk='<span data-fc></span>'; label=`Статистика ${L?(S.rack||1):A.frames+B.frames+1}-й ${unit}`;
+      if(L){ const f=ps[ps.length-1]; sa=f.a; sb=f.b; } }
+    if(L){
+      label=`${label} · общий счёт ${A.frames}:${B.frames}`;
+      const chips=ps.filter(f=>!f.cur||f.a||f.b||ps.length===1);
+      extra=`<div class="pyr">${chips.map(f=>`<span class="${f.cur?'cur':''}"><small>${f.cur?'сейчас · ':''}пирамида ${f.n}${f.k==='cut'?' · неполн.':''}</small><i><b class="${f.a>f.b?'w':''}">${f.a}</b> : <b class="${f.b>f.a?'w':''}">${f.b}</b></i></span>`).join('')}</div>`;
+    }
   } else { Q=matchStats(); clk='<span data-mc></span>'; label='Статистика встречи'; }
-  const rows=statRows(Q,isF), rh=Math.max(40,Math.min(64,Math.floor(700/Math.max(1,rows.length))-5));
+  const rows=statRows(Q,isF), rh=Math.max(36,Math.min(64,Math.floor((extra?600:700)/Math.max(1,rows.length))-5));
   const nm=p=>`<div class="n">${S.cfg.flags?flag(p.country):''}<span class="fitx">${esc(teamName(p))}</span></div>`;
-  return hdHTML()+`<div class="vsrow">${nm(A)}<div class="s">${A.frames}</div><div class="c">${clk}</div><div class="s">${B.frames}</div>${nm(B)}</div>
-    <div class="sec fitt">${label}</div>${rowsHTML(rows,rh)}`;
+  return hdHTML()+`<div class="vsrow">${nm(A)}<div class="s">${sa}</div><div class="c">${clk}</div><div class="s">${sb}</div>${nm(B)}</div>
+    <div class="sec fitt">${label}</div>${rowsHTML(rows,rh)}${extra}`;
 }
 const INFO=[['city','Город'],['age','Возраст'],['height','Рост'],['rank','Звание'],['club','Клуб'],['cue','Кий']];
 function vsCard(){

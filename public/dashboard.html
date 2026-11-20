@@ -50,6 +50,7 @@ h1 b{color:#e4002b}
 .det{display:none;margin-top:10px;background:#070b16;border-radius:10px;padding:10px;font-size:14px}
 .m.open .det{display:block}
 .det table{width:100%;border-collapse:collapse}
+.parts{margin-bottom:8px;line-height:1.9}.parts span{display:inline-block;background:#141d33;border-radius:6px;padding:0 8px;margin:0 4px 4px 0;font:600 15px Oswald}.parts i{font-style:normal}.parts i.w{color:#ffd166}
 .det td{padding:5px 6px;border-top:1px solid #141d33}
 .det td:first-child,.det td:last-child{font:600 16px Oswald;width:70px}
 .det td:last-child{text-align:right}
@@ -321,7 +322,7 @@ function renderHistory(){
         <div style="min-width:0"><div class="mt">${esc(m.title)}${m.subtitle?' · '+esc(m.subtitle):''}${m.tableName?' · '+esc(m.tableName):''}</div>
           <div class="ms"><div class="a ${m.winner===0?'w':''}">${esc(a.name)}</div><div class="sc">${a.frames} : ${b.frames}</div><div class="b ${m.winner===1?'w':''}">${esc(b.name)}</div></div></div>
         <button class="btn d sm" data-del="${m.id}">✕</button></div>
-      <div class="det"><table>${DET.map(([l,fn])=>`<tr><td>${fn(a)}</td><td class="l">${l}</td><td>${fn(b)}</td></tr>`).join('')}</table></div>
+      <div class="det">${(m.parts||[]).length?`<div class="parts"><b>${m.game==='long'?'Счёт по пирамидам':'Счёт шаров по партиям'}:</b> ${m.parts.map((f,k)=>`<span>${k+1}${f.k==='cut'?'н':''}: <i class="${f.a>f.b?'w':''}">${f.a}</i>:<i class="${f.b>f.a?'w':''}">${f.b}</i></span>`).join(' ')}</div>`:''}<table>${DET.map(([l,fn])=>`<tr><td>${fn(a)}</td><td class="l">${l}</td><td>${fn(b)}</td></tr>`).join('')}</table></div>
     </div>`}).join(''):'<div class="empty">'+(f?'Ничего не найдено.':'Сохранённых матчей пока нет. На пульте нажмите «Сохранить матч» в конце игры.')+'</div>';
 }
 $('hFilter').oninput=renderHistory;

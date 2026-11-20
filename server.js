@@ -195,7 +195,14 @@ function matchFrom(tableId, st) {
   const race = +st.raceTo || 0;
   let winner = players.findIndex(p => race && p.frames >= race);
   if (winner < 0 && players.length === 2 && players[0].frames !== players[1].frames) winner = players[0].frames > players[1].frames ? 0 : 1;
-  return { id: uid(8), at: Date.now(), tableId, tableName: t.name, title: clean(st.title, 120), subtitle: clean(st.subtitle, 120), raceTo: race, players, winner };
+  // счёт каждой партии / пирамиды: сыгранные + текущая (в длинной пирамиде)
+  const long = st.game === 'long';
+  const parts = (Array.isArray(st.frameLog) ? st.frameLog : []).slice(0, 300).map(f => ({ a: +f.a || 0, b: +f.b || 0, k: f.k === 'cut' ? 'cut' : (long ? 'full' : undefined) }));
+  if (long && st.fs && Array.isArray(st.fs.sc) && players.length === 2) {
+    const a = players[0].frames - (+st.fs.sc[0] || 0), b = players[1].frames - (+st.fs.sc[1] || 0);
+    if (a || b) parts.push({ a, b, k: st.rk === 'cut' ? 'cut' : 'full' });
+  }
+  return { id: uid(8), at: Date.now(), tableId, tableName: t.name, title: clean(st.title, 120), subtitle: clean(st.subtitle, 120), raceTo: race, players, winner, game: long ? 'long' : 'classic', parts };
 }
 function csvEscape(v) { v = String(v == null ? '' : v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
 
