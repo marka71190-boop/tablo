@@ -559,7 +559,7 @@ body.compact #cmp{display:grid;position:fixed;inset:0;grid-template-rows:auto au
 
 <div id="ovWrap"></div>
 <div id="comm"></div>
-<div id="cRackDlg" class="c-dlg"><div><b id="rkTitle">Какую пирамиду ставим?</b><span id="rkSub" style="text-align:center;color:#aab4cb"></span><button class="ab frame" data-crk="cut">Неполная (14 шаров + 2 на столе)<small>продолжение из текущей позиции</small></button><button class="ab frame" data-crk="full">Полная (15 шаров + биток)<small>биток с руки из «дома»</small></button><button class="ab miss" data-crk="x">Позже</button></div></div>
+<div id="cRackDlg" class="c-dlg"><div><b id="rkTitle">Какую пирамиду ставим?</b><span id="rkSub" style="text-align:center;color:#aab4cb"></span><button class="ab frame" data-crk="cut">Неполная (14 шаров + 2 на столе)<small>без разбоя — серия продолжается</small></button><button class="ab frame" data-crk="full">Полная (15 шаров + биток)<small>разбой, биток с руки из «дома»</small></button><button class="ab miss" data-crk="x">Позже</button></div></div>
 <div id="cmp">
   <div class="c-top"><button class="modebtn" id="toFull">☰ Полный</button><select id="cScr"></select><span class="net" id="net2">…</span></div>
   <div class="c-game"><button data-game="classic">По партиям</button><button data-game="long">Длинная свободная</button><label>до<input id="cRace" type="number" min="1" max="999"></label></div>
@@ -1017,10 +1017,12 @@ function applyEv(X,e){
   else if(t==='ext') p.extUsed++;
   else if(t==='turn'){ if(X.turn!==i) recvTurn(X,i); X.turn=i; X.series=0; }
   else if(t==='sub'){ X.vis[i]=(X.vis[i]??0)+1; X.sub[i]=1-(X.sub[i]||0); }
-  else if(t==='rack'){ // длинная пирамида: пирамиду собрали заново — новая стойка, следующий удар считается разбоем
+  else if(t==='rack'){ /* длинная пирамида: полная — следующий удар разбой; неполная — разбоя нет, серия того, кто забил 14-й, продолжается */
     const [A,B]=X.players, sc=X.fs.sc||[0,0], pa=A.frames-sc[0], pb=B.frames-sc[1], dur=Math.max(0,(e.mt||0)-X.fs.at);
-    if(X.fs.brk||pa||pb){ X.lastFrame={n:X.rack||1,k:X.rk,p:frameStats(X),dur,brk:X.fs.brk}; X.frameLog.push({w:pa>pb?0:pb>pa?1:-1,a:pa,b:pb,dur,k:X.rk}); }
-    X.rack=(X.rack||1)+1; X.rk=e.k==='cut'?'cut':'full'; X.fs=newFs(X.players,e.mt||0); X.onT=16; // 15 шаров + биток if(X.turn!==i){ recvTurn(X,i); X.series=0; } X.turn=i; // тот же игрок — серия продолжается
+    if((X.fs.brk&&X.fs.brk.i>=0)||pa||pb){ X.lastFrame={n:X.rack||1,k:X.rk,p:frameStats(X),dur,brk:X.fs.brk}; X.frameLog.push({w:pa>pb?0:pb>pa?1:-1,a:pa,b:pb,dur,k:X.rk}); }
+    X.rack=(X.rack||1)+1; X.rk=e.k==='cut'?'cut':'full'; X.fs=newFs(X.players,e.mt||0); X.onT=16; /* 15 шаров + биток */
+    if(X.rk==='cut') X.fs.brk={i:-1,ok:null}; /* неполная: разбоя нет */
+    if(X.turn!==i){ recvTurn(X,i); X.series=0; } X.turn=i; /* тот же игрок — серия продолжается */
   }
   else if(t==='reset'){ X.players.forEach(q=>{CNT.forEach(k=>q[k]=0);q.best=0}); X.series=0; X.fs=newFs(X.players,e.mt||0); X.lastFrame=null; }
 }
@@ -1201,8 +1203,8 @@ function hdHTML(){
 function rowsHTML(list,rh){
   return `<div class="rows" style="--rh:${rh}px">${list.map(([a,k,b,lead],i)=>`<div class="row" style="--d:${(0.45+i*0.07).toFixed(2)}s"><div class="v l fitx${lead===0?' lead':''}">${esc(a)}</div><div class="k"><span class="fitt">${esc(k)}</span></div><div class="v fitx${lead===1?' lead':''}">${esc(b)}</div></div>`).join('')}</div>`;
 }
-function statRows(Q,isFrame){
-  return statList().map(([l,f,fm,dir])=>{
+function statRows(Q,isFrame,noBrk){
+  return statList().filter(r=>!(noBrk&&r[0]==='Начальный удар')).map(([l,f,fm,dir])=>{
     const a=f(Q[0],isFrame), b=f(Q[1],isFrame);
     const show=(v,q)=>fm?fm(v,q,isFrame):(v==null?'—':v);
     let lead=null;
@@ -1233,7 +1235,8 @@ function statCard(kind){
       extra=`<div class="pyr">${chips.map(f=>`<span class="${f.cur?'cur':''}"><small>${f.cur?'сейчас · ':''}пирамида ${f.n}${f.k==='cut'?' · неполн.':''}</small><i><b class="${f.a>f.b?'w':''}">${f.a}</b> : <b class="${f.b>f.a?'w':''}">${f.b}</b></i></span>`).join('')}</div>`;
     }
   } else { Q=matchStats(); clk='<span data-mc></span>'; label='Статистика встречи'; }
-  const rows=statRows(Q,isF), rh=Math.max(36,Math.min(64,Math.floor((extra?600:700)/Math.max(1,rows.length))-5));
+  const noBrk=isF&&L&&(Q===S.lastFrame?.p?S.lastFrame.k==='cut':S.rk==='cut');
+  const rows=statRows(Q,isF,noBrk), rh=Math.max(36,Math.min(64,Math.floor((extra?600:700)/Math.max(1,rows.length))-5));
   const nm=p=>`<div class="n">${S.cfg.flags?flag(p.country):''}<span class="fitx">${esc(teamName(p))}</span></div>`;
   return hdHTML()+`<div class="vsrow">${nm(A)}<div class="s">${sa}</div><div class="c">${clk}</div><div class="s">${sb}</div>${nm(B)}</div>
     <div class="sec fitt">${label}</div>${rowsHTML(rows,rh)}${extra}`;
@@ -1846,7 +1849,7 @@ document.addEventListener('click',e=>{
     if(p.playerId) toProf(p.playerId).catch(()=>toast('Не удалось сохранить',true));
     else fetch('/api/players',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:p.name,country:p.country})}).then(r=>r.json())
       .then(j=>{ if(!j.id) throw 0; p.playerId=j.id; save(); return toProf(j.id); }).catch(()=>toast('Не удалось сохранить',true)); }
-  else if(b.dataset.rack!=null){ ev('rack',+b.dataset.rack,b.dataset.rk); toast(pyrName(S.rack,S.rk)+': разбивает '+S.players[+b.dataset.rack].name); }
+  else if(b.dataset.rack!=null){ ev('rack',+b.dataset.rack,b.dataset.rk); toast(pyrName(S.rack,S.rk)+(S.rk==='cut'?': продолжает ':': разбивает ')+S.players[+b.dataset.rack].name); }
   else if(b.dataset.up!=null||b.dataset.dn!=null){ const i=+(b.dataset.up??b.dataset.dn), j=b.dataset.up!=null?i-1:i+1, L=S.cfg.stats; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; save(); renderCfg(true); }
   else if(b.dataset.clr!=null){snap();S.players[+b.dataset.clr][b.dataset.kind]='';save();}
   else if(b.dataset.sprm!=null){snap();S.cfg.sponsors.splice(+b.dataset.sprm,1);save();renderCfg(true);}
@@ -2093,7 +2096,7 @@ function openRackDlg(auto){ if(isOverlay()) return;
   $('rkTitle').textContent=auto?'Забит 14-й шар — какую пирамиду ставим?':'Новая пирамида — какую?';
   $('rkSub').textContent='Продолжает: '+teamName(S.players[S.turn])+(S.series>0?` · серия ${S.series} продолжается`:'');
   $('cRackDlg').style.display='grid'; try{navigator.vibrate&&navigator.vibrate([60,40,60])}catch(_){} }
-document.querySelectorAll('[data-crk]').forEach(b=>b.onclick=()=>{ $('cRackDlg').style.display='none'; if(b.dataset.crk==='x') return; ev('rack',S.turn,b.dataset.crk); toast(pyrName(S.rack,S.rk)+': продолжает '+S.players[S.turn].name); });
+document.querySelectorAll('[data-crk]').forEach(b=>b.onclick=()=>{ $('cRackDlg').style.display='none'; if(b.dataset.crk==='x') return; ev('rack',S.turn,b.dataset.crk); toast(pyrName(S.rack,S.rk)+(S.rk==='cut'?': продолжает серию ':': разбивает ')+S.players[S.turn].name); });
 function renderCompact(){
   if(!document.body.classList.contains('compact')) return;
   const cp=(i)=>{ const p=S.players[i]; const el=$(i?'cpB':'cpA'); el.classList.toggle('on',S.turn===i);
