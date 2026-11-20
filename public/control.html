@@ -1247,7 +1247,7 @@ function nameHTML(i){
   return `<span class="t ${isPair()?'fitt':'fitx'}">${teamHTML(i)}</span>${turn?'<i class="dot"></i>':''}${sub}<span class="sp"></span>${ex}`;
 }
 function ballsHTML(c,i){
-  if(isLong()) return i===0&&S.cfg.balls?`<span style="font:600 18px Oswald;letter-spacing:2px;color:var(--lblT);text-transform:uppercase">на столе: <b style="color:var(--g);font-size:22px">${S.onT??16}</b></span>`:'';
+  if(isLong()) return ''; // длинная пирамида: шары на столе на плашке не показываем (они есть на пульте и у комментатора)
   const p=S.players[i], n=S.ballsTo; if(!S.cfg.balls||n<=0) return '';
   const key='bl'+i, prev=c._prev[key]; c._prev[key]=p.balls;
   return Array.from({length:n},(_,k)=>`<span class="bl${k<p.balls?'':' e'}${prev!==undefined&&k<p.balls&&k>=prev?' new':''}"></span>`).join('');
