@@ -281,6 +281,11 @@ body.overlay{background:transparent;overflow:hidden}
 body.overlay #panel{display:none}
 #ovWrap{display:none;position:fixed;inset:0;align-items:center;justify-content:center;overflow:hidden}
 body.overlay #ovWrap{display:flex}
+/* просмотр эфирной ссылки на планшете/телефоне (не OBS): тёмный фон, плашка крупно; в эфире ничего не меняется */
+body.overlay.viewer{background:#0b100e}
+body.viewer #ovWrap{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.vhint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);padding:6px 14px;border-radius:20px;background:rgba(0,0,0,.6);color:#aab4cb;font:14px 'Roboto Condensed',sans-serif;pointer-events:none;opacity:0;transition:opacity .6s}
+.vhint.on{opacity:1}
 
 /* ============ ЭКРАН КОММЕНТАТОРА (/k/<стол>) — не для эфира ============ */
 #comm{display:none}
@@ -1613,8 +1618,27 @@ function fitText(root){
     if(over(el)&&w.length>1&&!/[\d\/]/.test(el.textContent)){ el.dataset.full=el.textContent; el.textContent=w[0]+' '+w.slice(1).map(x=>x[0]+'.').join(' '); shrink(el,fs0,min); }
   });
 }
+const VIEWER=isOverlay()&&!isComm()&&!window.obsstudio&&QS.get('view')!=='0'&&(QS.get('view')==='1'||matchMedia('(pointer:coarse)').matches);
+let vFull=false, vBox=null;
+function viewerBox(st){ /* рамка видимого содержимого текущего экрана, в координатах сцены 1920×1080 */
+  const scr=st.querySelector('.scr.on'); if(!scr||!['bug','side'].includes(scr.dataset.s)) return null;
+  const z=parseFloat(st.style.zoom)||1, R0=st.getBoundingClientRect(); let x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;
+  scr.querySelectorAll('*').forEach(el=>{ if(!el.offsetWidth&&!el.offsetHeight) return; const cs=getComputedStyle(el); if(cs.visibility==='hidden'||+cs.opacity===0) return;
+    const r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return;
+    x1=Math.min(x1,r.left);y1=Math.min(y1,r.top);x2=Math.max(x2,r.right);y2=Math.max(y2,r.bottom); });
+  if(x2<=x1) return null;
+  const c=v=>Math.max(0,v); x1=c((x1-R0.left)/z);y1=c((y1-R0.top)/z);x2=Math.min(1920,(x2-R0.left)/z);y2=Math.min(1080,(y2-R0.top)/z);
+  return x2-x1>50&&y2-y1>30?{x:x1-16,y:y1-16,w:x2-x1+32,h:y2-y1+32}:null;
+}
 function fit(container){
   const st=container.querySelector('.stage'); if(!st) return;
+  if(VIEWER&&container.id==='ovWrap'){
+    const W=container.clientWidth,H=container.clientHeight, b=vFull?null:viewerBox(st);
+    if(b){ const same=vBox&&Math.abs(b.w-vBox.w)<40&&Math.abs(b.h-vBox.h)<40&&Math.abs(b.x-vBox.x)<40&&Math.abs(b.y-vBox.y)<40;
+      if(!same) vBox=b; const k=Math.min(W/vBox.w,H/vBox.h);
+      st.style.zoom=k; st.style.position='absolute'; st.style.left=(W/2/k-(vBox.x+vBox.w/2))+'px'; st.style.top=(H/2/k-(vBox.y+vBox.h/2))+'px'; return; }
+    vBox=null; st.style.position=''; st.style.left=''; st.style.top='';
+  }
   // zoom, а не transform: браузер заново раскладывает и рисует всё в реальном разрешении
   // (3840×2160 в OBS = чёткий 4K), без растягивания картинки 1920×1080
   if(!container.clientWidth||!container.clientHeight) return; // контейнер скрыт (компактный режим)
@@ -2112,6 +2136,14 @@ function renderCompact(){
 S=norm({});
 function route(){document.body.classList.toggle('overlay',isOverlay()&&!isComm());document.body.classList.toggle('comm',isComm());if(isComm()) document.title='Комментатор · Табло';renderAll(true)}
 window.addEventListener('resize',()=>{fit(isOverlay()?$('ovWrap'):$('pv'))});
+if(VIEWER){ document.body.classList.add('viewer');
+  const h=document.createElement('div'); h.className='vhint'; document.body.appendChild(h);
+  const hint=t=>{ h.textContent=t; h.classList.add('on'); clearTimeout(h._t); h._t=setTimeout(()=>h.classList.remove('on'),2500); };
+  setInterval(()=>fit($('ovWrap')),700);
+  $('ovWrap').addEventListener('click',()=>{ vFull=!vFull; vBox=null; fit($('ovWrap')); hint(vFull?'Весь кадр эфира · нажмите, чтобы увеличить плашку':'Плашка крупно · нажмите, чтобы показать весь кадр');
+    try{ navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{}); }catch(_){} });
+  setTimeout(()=>hint('Нажмите на экран — весь кадр / плашка крупно'),1500);
+}
 loadPoll();
 if(!isOverlay()){ setupLinks(); loadPlayers(); loadBracket(); loadTpl();
   let cm=null; try{ cm=localStorage.getItem(CMP_KEY) }catch(_){}
